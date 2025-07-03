@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>net9.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
+	
+	<ItemGroup>
+		<ProjectReference Include="..\ArtAuctionHub.Domain\ArtAuctionHub.Domain.csproj" />
+		<ProjectReference Include="..\ArtAuctionHub.Shared\ArtAuctionHub.Shared.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Folder Include="DTOs\" />
+		<Folder Include="Interfaces\" />
+		<Folder Include="Services\" />
+	</ItemGroup>
+</Project>

@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+	<PropertyGroup>
+		<TargetFramework>net9.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\ArtAuctionHub.Application\ArtAuctionHub.Application.csproj" />
+		<ProjectReference Include="..\ArtAuctionHub.Infrastructure\ArtAuctionHub.Infrastructure.csproj" />
+		<ProjectReference Include="..\ArtAuctionHub.Shared\ArtAuctionHub.Shared.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="Controllers\" />
+	  <Folder Include="Filters\" />
+	  <Folder Include="Middlewares\" />
+	</ItemGroup>
+</Project>

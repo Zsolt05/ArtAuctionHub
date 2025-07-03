@@ -1,0 +1,6 @@
+@ArtAuctionHub.API_HostAddress = http://localhost:5000
+
+GET {{ArtAuctionHub.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
