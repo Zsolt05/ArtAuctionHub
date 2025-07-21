@@ -1,0 +1,40 @@
+﻿# HTTP test file for ArtworksController
+@id = 1
+
+POST http://localhost:5000/api/artworks
+Content-Type: application/json
+
+{
+  "title": "Mona Lisa",
+  "codeName": "mona-lisa",
+  "description": "Famous painting.",
+  "imageUrl": "https://example.com/image.jpg",
+  "isAdultOnly": false,
+  "categoryId": 1
+}
+
+###
+
+PUT http://localhost:5000/api/artworks/{{id}}
+Content-Type: application/json
+
+{
+  "title": "Updated Title",
+  "codeName": "updated-code",
+  "description": "Updated description.",
+  "imageUrl": "https://example.com/updated.jpg",
+  "isAdultOnly": false,
+  "categoryId": 2
+}
+
+###
+
+DELETE http://localhost:5000/api/artworks/{{id}}
+
+###
+
+GET http://localhost:5000/api/artworks
+
+###
+
+GET http://localhost:5000/api/artworks/my

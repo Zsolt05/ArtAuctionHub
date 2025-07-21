@@ -1,0 +1,12 @@
+﻿# HTTP test file for FavoritesController
+@artworkId = 1
+
+POST http://localhost:5000/api/favorites/{{artworkId}}
+
+###
+
+DELETE http://localhost:5000/api/favorites/{{artworkId}}
+
+###
+
+GET http://localhost:5000/api/favorites

@@ -1,0 +1,13 @@
+﻿# HTTP test file for BidsController
+
+POST http://localhost:5000/api/bids
+Content-Type: application/json
+
+{
+  "auctionId": 1,
+  "amount": 100.50
+}
+
+###
+
+GET http://localhost:5000/api/bids/my

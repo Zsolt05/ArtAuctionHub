@@ -9,6 +9,11 @@
 // Think of it as the setup phase of your app.
 var builder = WebApplication.CreateBuilder(args);
 
+// Registers controllers as services in the dependency injection container.
+// This enables us to create controllers (classes with [ApiController] attribute)
+// that define REST endpoints.
+builder.Services.AddControllers();
+
 // Builds the WebApplication object from the builder.
 // This is the main object used to configure the app's request pipeline
 // and define routes, middleware, and more.
@@ -18,6 +23,11 @@ var app = builder.Build();
 // This improves security by ensuring encrypted communication.
 // Example: http://localhost:5000 → https://localhost:7000
 app.UseHttpsRedirection();
+
+// Maps all controller endpoints to the request pipeline.
+// If we have controllers (e.g., AuthController), 
+// their routes will be automatically recognized and served.
+app.MapControllers();
 
 // An array of weather condition summaries.
 // These strings will be used randomly to describe each forecast.
