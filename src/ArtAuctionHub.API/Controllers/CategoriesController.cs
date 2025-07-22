@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using ArtAuctionHub.Application.Interfaces;
+using Microsoft.AspNetCore.Mvc;
 
 namespace ArtAuctionHub.API.Controllers
 {
@@ -9,6 +10,17 @@ namespace ArtAuctionHub.API.Controllers
     [Route("api/categories")] // Base route for category-related endpoints. (/api/categories)
     public class CategoriesController : ControllerBase
     {
+        private readonly ICategoryService _categoryService;
+
+        /// <summary>
+        /// Constructor for the CategoriesController.
+        /// </summary>
+        /// <param name="categoryService">An instance of ICategoryService to handle category operations. Registered in the Dependency Injection (DI) container.</param>
+        public CategoriesController(ICategoryService categoryService)
+        {
+            _categoryService = categoryService;
+        }
+
         /// <summary>
         /// Retrieves all available artwork categories.
         /// </summary>
@@ -16,7 +28,11 @@ namespace ArtAuctionHub.API.Controllers
         [HttpGet] // Matches GET /api/categories.
         public IActionResult GetCategories()
         {
-            return Ok(new[] { "Painting", "Sculpture", "Digital Art" });
+            // Future implementation would involve:
+            // 1. Fetching categories from the database.
+            // 2. Returning the list of categories in a suitable format (e.g., list of CategoryDto).
+            var categories = _categoryService.GetCategories();
+            return Ok(categories); // Returns 200 OK with the list of categories.
         }
     }
 }

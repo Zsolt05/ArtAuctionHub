@@ -1,4 +1,5 @@
 ﻿using ArtAuctionHub.Application.DTOs.Auction;
+using ArtAuctionHub.Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ArtAuctionHub.API.Controllers
@@ -7,9 +8,10 @@ namespace ArtAuctionHub.API.Controllers
     /// The AuctionsController handles operations related to auctions,
     /// such as starting, editing, deleting, and retrieving auction details.
     /// </summary>
+    /// <param name="_auctionService"> An instance of IAuctionService to handle auction operations. Registered in the Dependency Injection (DI) container.</param>
     [ApiController] // Indicates that this controller responds to web API requests.
     [Route("api/auctions")] // Base route for all auction-related endpoints. (/api/auctions)
-    public class AuctionsController : ControllerBase
+    public class AuctionsController(IAuctionService _auctionService) : ControllerBase
     {
         /// <summary>
         /// Starts a new auction for a given artwork.
@@ -19,10 +21,11 @@ namespace ArtAuctionHub.API.Controllers
         [HttpPost] // Matches POST /api/auctions.
         public IActionResult StartAuction([FromBody] AuctionDto dto)
         {
-            // Real implementation:
+            // Future implementation:
             // 1. Validate the auction details.
             // 2. Link auction to artwork and save it.
-            return Created("", dto);
+            var createdAuction = _auctionService.CreateAuction(dto);
+            return Ok(createdAuction);
         }
 
         /// <summary>
@@ -35,7 +38,12 @@ namespace ArtAuctionHub.API.Controllers
         [Route("{id}")] // Matches PUT /api/auctions/{id}.
         public IActionResult EditAuction(int id, [FromBody] AuctionDto dto)
         {
-            return Ok(dto);
+            // Future implementation:
+            // 1. Check if the auction with the given ID exists.
+            // 2. Update its properties based on the provided dto.
+            // 3. Save changes to the database.
+            var updatedAuction = _auctionService.UpdateAuction(id, dto);
+            return Ok(updatedAuction);
         }
 
         /// <summary>
@@ -47,7 +55,11 @@ namespace ArtAuctionHub.API.Controllers
         [Route("{id}")] // Matches DELETE /api/auctions/{id}.
         public IActionResult DeleteAuction(int id)
         {
-            return NoContent();
+            // Future implementation:
+            // 1. Check if the auction with the given ID exists.
+            // 2. Delete it from the database.
+            _auctionService.DeleteAuction(id);
+            return NoContent(); // Returns 204 No Content on successful deletion.
         }
 
         /// <summary>
@@ -58,7 +70,11 @@ namespace ArtAuctionHub.API.Controllers
         [Route("active")] // Matches GET /api/auctions/active.
         public IActionResult GetActiveAuctions()
         {
-            return Ok(new[] { "Auction1", "Auction2" });
+            // Future implementation:
+            // 1. Fetch active auctions from the database.
+            // 2. Return them in a suitable format (e.g., list of auction DTOs).
+            var activeAuctions = _auctionService.GetActiveAuctions();
+            return Ok(activeAuctions);
         }
 
         /// <summary>
@@ -69,7 +85,11 @@ namespace ArtAuctionHub.API.Controllers
         [Route("my")] // Matches GET /api/auctions/my.
         public IActionResult GetMyAuctions()
         {
-            return Ok(new[] { "MyAuction1" });
+            // Future implementation:
+            // 1. Fetch auctions created by the authenticated user.
+            // 2. Return them in a suitable format (e.g., list of auction DTOs).
+            var myAuctions = _auctionService.GetUserAuctions();
+            return Ok(myAuctions);
         }
 
         /// <summary>
@@ -81,7 +101,15 @@ namespace ArtAuctionHub.API.Controllers
         [Route("{id}")] // Matches GET /api/auctions/{id}.
         public IActionResult GetAuctionDetails(int id)
         {
-            return Ok(new { AuctionId = id, Status = "Active" });
+            // Future implementation:
+            // 1. Fetch the auction details by ID from the database.
+            // 2. Return the auction data in a suitable format (e.g., auction DTO).
+            var auctionDetails = _auctionService.GetAuctionById(id);
+            if (auctionDetails == null)
+            {
+                return NotFound(); // Returns 404 Not Found if the auction does not exist.
+            }
+            return Ok(auctionDetails);
         }
     }
 }

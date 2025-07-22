@@ -1,18 +1,40 @@
-﻿// -----------------------------------------------------------
-// This is a simple ASP.NET Core Web API that exposes a 
-// "/weatherforecast" endpoint. It returns a list of 
-// randomly generated weather forecasts for the next 5 days.
-// -----------------------------------------------------------
-
-// Creates a WebApplicationBuilder, which is used to configure
+﻿// Creates a WebApplicationBuilder, which is used to configure
 // services and middleware for the application.
 // Think of it as the setup phase of your app.
+using ArtAuctionHub.Application.Interfaces;
+using ArtAuctionHub.Application.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Registers controllers as services in the dependency injection container.
 // This enables us to create controllers (classes with [ApiController] attribute)
 // that define REST endpoints.
 builder.Services.AddControllers();
+
+// Registers application services in the dependency injection container.
+// These services can be injected into controllers or other services.
+// There are several services registered here, each responsible for a specific part of the application logic.
+
+// 3 types of services are can be registered:
+// 1. Scoped: Created once per request.
+//    Example: IAuthService, IAuctionService, DbContext.
+//    (These services maintain per-request data and are reused throughout a single HTTP request.)
+
+// 2. Singleton: Created once and shared throughout the application.
+//    Example: IHttpContextAccessor, ILogger<T>, IConfiguration.
+//    (These services are created once and shared globally, as they don't depend on per-request data.)
+
+// 3. Transient: Created new each time they are injected.
+//    Example: IGuidGenerator, EmailSenderService, PasswordHasher.
+//    (These are lightweight services that are often stateless and safe to recreate each time.)
+
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IAuctionService, AuctionService>();
+builder.Services.AddScoped<IArtworkService, ArtworkService>();
+builder.Services.AddScoped<IBidService, BidService>();
+builder.Services.AddScoped<IFavoriteService, FavoriteService>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
+
 
 // Builds the WebApplication object from the builder.
 // This is the main object used to configure the app's request pipeline

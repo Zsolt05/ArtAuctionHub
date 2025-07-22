@@ -1,4 +1,5 @@
 ﻿using ArtAuctionHub.Application.DTOs.Auth;
+using ArtAuctionHub.Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ArtAuctionHub.API.Controllers
@@ -11,6 +12,17 @@ namespace ArtAuctionHub.API.Controllers
     [Route("api/auth")] // Base route for authentication-related endpoints. (/api/auth)
     public class AuthController : ControllerBase
     {
+        private readonly IAuthService _authService;
+
+        /// <summary>
+        /// Constructor for AuthController.
+        /// </summary>
+        /// <param name="authService">An implementation of IAuthService to handle authentication operations. Registered in the Dependency Injection (DI) container.</param>
+        public AuthController(IAuthService authService)
+        {
+            _authService = authService;
+        }
+
         /// <summary>
         /// Registers a new user based on the data provided in the request body.
         /// </summary>
@@ -29,6 +41,7 @@ namespace ArtAuctionHub.API.Controllers
             // 2. Hash the password before storing it.
             // 3. Save the new user to the database.
             // Currently, we simply return a success message.
+            _authService.Register(dto);
             return Ok(new { Message = "User registered successfully." });
         }
 
@@ -45,12 +58,13 @@ namespace ArtAuctionHub.API.Controllers
         [Route("login")] // Matches POST /api/auth/login.
         public IActionResult Login([FromBody] LoginDto dto)
         {
-            // Normally, we would:
+            // Future implementation would include:
             // 1. Validate the provided credentials.
             // 2. Check the password hash against the stored hash in the database.
             // 3. Generate a JWT token if authentication is successful.
             // Here, we return a dummy token for demonstration purposes.
-            return Ok(new { Token = "jwt-token-placeholder" });
+            var token = _authService.Login(dto);
+            return Ok(new { Token = token });
         }
 
         /// <summary>
@@ -63,10 +77,16 @@ namespace ArtAuctionHub.API.Controllers
         [Route("me")] // Matches GET /api/auth/me.
         public IActionResult Me()
         {
-            // The User property (inherited from ControllerBase) provides access
-            // to the current user’s identity based on authentication middleware (e.g., JWT claims).
-            // If no user is authenticated, User.Identity?.Name will be null.
-            return Ok(new { User = User.Identity?.Name });
+            //Future implementation would include:
+            // 1. Checking if the user is authenticated (e.g., via a JWT token).
+            // 2. If authenticated, retrieve the user's details from the database.
+            // 3. Return the user's information.
+            var userInfo = _authService.GetCurrentUser(User);
+            if (userInfo == null)
+            {
+                return NotFound(new { Message = "User not found." });
+            }
+            return Ok(userInfo);
         }
     }
 }

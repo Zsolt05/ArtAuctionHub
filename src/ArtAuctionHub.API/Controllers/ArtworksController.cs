@@ -1,4 +1,5 @@
 ﻿using ArtAuctionHub.Application.DTOs.ArtWork;
+using ArtAuctionHub.Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ArtAuctionHub.API.Controllers
@@ -10,6 +11,17 @@ namespace ArtAuctionHub.API.Controllers
     [Route("api/artworks")] // Base route for all artwork-related endpoints. (/api/artworks)
     public class ArtworksController : ControllerBase
     {
+        private readonly IArtworkService _artworkService;
+
+        /// <summary>
+        /// Constructor for the ArtworksController.
+        /// </summary>
+        /// <param name="artworkService">An instance of IArtworkService to handle artwork operations. Registered in the Dependency Injection (DI) container.</param>
+        public ArtworksController(IArtworkService artworkService)
+        {
+            _artworkService = artworkService;
+        }
+
         /// <summary>
         /// Creates a new artwork based on the provided data.
         /// </summary>
@@ -25,8 +37,9 @@ namespace ArtAuctionHub.API.Controllers
             // Future implementation would involve:
             // 1. Validate the dto.
             // 2. Save the artwork to the database.
-            // 3. Return the created resource (possibly with its new ID).
-            return Created("", dto); // Placeholder response: returns the same dto.
+            // 3. Return the created resource.
+            var createdArtwork = _artworkService.CreateArtwork(dto);
+            return Ok(createdArtwork); // Placeholder response.
         }
 
         /// <summary>
@@ -44,7 +57,9 @@ namespace ArtAuctionHub.API.Controllers
             // Future implementation would involve:
             // 1. Check if the artwork with the given ID exists.
             // 2. Update its properties based on the provided dto.
-            return Ok(dto); // Placeholder response.
+            // 3. Save changes to the database.
+            var updatedArtwork = _artworkService.UpdateArtwork(id, dto);
+            return Ok(updatedArtwork); // Returns 200 OK with the updated artwork.
         }
 
         /// <summary>
@@ -61,7 +76,8 @@ namespace ArtAuctionHub.API.Controllers
             // Future implementation would involve:
             // 1. Check if the artwork exists.
             // 2. Delete it from the database.
-            return NoContent(); // Returns 204 No Content.
+            _artworkService.DeleteArtwork(id);
+            return NoContent(); // Returns 204 No Content indicating successful deletion.
         }
 
         /// <summary>
@@ -74,7 +90,8 @@ namespace ArtAuctionHub.API.Controllers
         public IActionResult GetAll()
         {
             // Future implementation would involve fetching artworks from the database.
-            return Ok(new[] { "Artwork1", "Artwork2" }); // Example data.
+            var artworks = _artworkService.GetAllArtworks();
+            return Ok(artworks); // Returns 200 OK with the list of artworks.
         }
 
         /// <summary>
@@ -88,7 +105,8 @@ namespace ArtAuctionHub.API.Controllers
         public IActionResult GetMyArtworks()
         {
             // Future implementation would involve fetching artworks from the database based on the authenticated user.
-            return Ok(new[] { "MyArtwork1" }); // Placeholder data.
+            var artworks = _artworkService.GetMyArtworks();
+            return Ok(artworks); // Returns 200 OK with the user's artworks.
         }
     }
 }
