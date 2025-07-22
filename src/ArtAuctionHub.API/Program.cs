@@ -1,10 +1,19 @@
-﻿// Creates a WebApplicationBuilder, which is used to configure
+﻿using ArtAuctionHub.Application.Interfaces;
+using ArtAuctionHub.Application.Services;
+using ArtAuctionHub.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
+
+// Creates a WebApplicationBuilder, which is used to configure
 // services and middleware for the application.
 // Think of it as the setup phase of your app.
-using ArtAuctionHub.Application.Interfaces;
-using ArtAuctionHub.Application.Services;
-
 var builder = WebApplication.CreateBuilder(args);
+
+// Adds Entity Framework Core services to the dependency injection container.
+// This allows us to use EF Core to interact with the database.
+// The DbContext is the main class that interacts with the database.
+// It is configured to use SQL Server with a connection string from the appsettings.json file.
+builder.Services.AddDbContext<ArtAuctionHubDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Registers controllers as services in the dependency injection container.
 // This enables us to create controllers (classes with [ApiController] attribute)
