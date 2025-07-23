@@ -1,6 +1,8 @@
-﻿using ArtAuctionHub.Application.Interfaces;
+﻿using ArtAuctionHub.API.Extensions;
+using ArtAuctionHub.Application.Interfaces;
 using ArtAuctionHub.Application.Services;
 using ArtAuctionHub.Infrastructure.Persistence;
+using ArtAuctionHub.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 
 // Creates a WebApplicationBuilder, which is used to configure
@@ -44,7 +46,7 @@ builder.Services.AddScoped<IBidService, BidService>();
 builder.Services.AddScoped<IFavoriteService, FavoriteService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 
-
+builder.Services.AddScoped<PasswordHasherService>();
 // Builds the WebApplication object from the builder.
 // This is the main object used to configure the app's request pipeline
 // and define routes, middleware, and more.

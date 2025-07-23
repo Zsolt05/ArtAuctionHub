@@ -3,7 +3,7 @@
     /// <summary>
     /// Data Transfer Object (DTO) representing the data of an artwork.
     /// </summary>
-    public class ArtworkDto
+    public record ArtworkDto
     {
         /// <summary>
         /// The official title of the artwork.

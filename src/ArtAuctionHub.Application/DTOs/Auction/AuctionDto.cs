@@ -3,7 +3,7 @@
     /// <summary>
     /// Data Transfer Object (DTO) representing the data of an auction.
     /// </summary>
-    public class AuctionDto
+    public record AuctionDto
     {
         /// <summary>
         /// The ID of the artwork being auctioned.
@@ -21,5 +21,10 @@
         /// Example: 2025-07-28T12:00:00Z.
         /// </summary>
         public DateTime EndDate { get; set; }
+
+        /// <summary>
+        /// The starting price of the auction in the local currency.
+        /// </summary>
+        public decimal StartingPrice { get; set; }
     }
 }

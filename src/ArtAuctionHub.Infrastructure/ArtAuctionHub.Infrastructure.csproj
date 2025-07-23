@@ -13,7 +13,6 @@
 
 	<ItemGroup>
 	  <Folder Include="Logging\" />
-	  <Folder Include="Services\" />
 	  <Folder Include="SignalR\" />
 	</ItemGroup>
 
@@ -24,5 +23,6 @@
 	    <PrivateAssets>all</PrivateAssets>
 	    <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 	  </PackageReference>
+	  <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="9.0.7" />
 	</ItemGroup>
 </Project>

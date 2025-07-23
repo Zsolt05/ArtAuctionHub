@@ -3,7 +3,7 @@
     /// <summary>
     /// Data Transfer Object (DTO) representing a bid placed on an auction.
     /// </summary>
-    public class BidDto
+    public record BidDto
     {
         /// <summary>
         /// The ID of the auction on which the bid is placed.

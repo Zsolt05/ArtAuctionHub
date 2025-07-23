@@ -4,7 +4,7 @@
     /// Data Transfer Object (DTO) used for login requests.
     /// Contains the user's email and password for authentication.
     /// </summary>
-    public class LoginDto
+    public record LoginDto
     {
         /// <summary>
         /// The email address of the user attempting to log in.

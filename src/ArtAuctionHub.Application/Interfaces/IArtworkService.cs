@@ -1,44 +1,40 @@
 ﻿using ArtAuctionHub.Application.DTOs.ArtWork;
+using Microsoft.AspNetCore.Http;
 
 namespace ArtAuctionHub.Application.Interfaces
 {
     /// <summary>
-    /// Provides the contract for artwork-related business logic,
-    /// including CRUD operations and queries.
+    /// Defines the contract for artwork-related operations
     /// </summary>
     public interface IArtworkService
     {
-        /// <summary>
-        /// Creates a new artwork with the provided details.
-        /// </summary>
-        /// <param name="dto">Artwork data transfer object containing the artwork details.</param>
-        /// <returns>ArtworkDto representing the created artwork.</returns>
-        ArtworkDto CreateArtwork(ArtworkDto dto);
+        #region EF Core Methods
 
         /// <summary>
-        /// Updates an existing artwork identified by its ID with the provided details.
+        /// Creates a new artwork and saves the uploaded image to the file system.
         /// </summary>
-        /// <param name="id">Artwork ID to identify the artwork to be updated.</param>
-        /// <param name="dto">Artwork data transfer object containing the updated artwork details.</param>
-        /// <returns>ArtworkDto representing the updated artwork.</returns>
-        ArtworkDto UpdateArtwork(int id, ArtworkDto dto);
+        Task<ReadArtworkDto> CreateArtworkAsync(ArtworkDto dto, IFormFile imageFile);
 
         /// <summary>
-        /// Deletes an artwork identified by its ID.
+        /// Updates an artwork in the database (excluding image update).
         /// </summary>
-        /// <param name="id">Artwork ID to identify the artwork to be deleted.</param>
-        void DeleteArtwork(int id);
+        Task<ReadArtworkDto> UpdateArtworkAsync(int id, ArtworkDto dto);
 
         /// <summary>
-        /// Retrieves a list of all artworks.
+        /// Deletes an artwork and its image from the database and file system.
         /// </summary>
-        /// <returns>A collection of ArtworkDto representing all artworks.</returns>
-        IEnumerable<ArtworkDto> GetAllArtworks();
+        Task DeleteArtworkAsync(int id);
 
         /// <summary>
-        /// Retrieves an artwork by its ID.
+        /// Retrieves all artworks from the database.
         /// </summary>
-        /// <returns>ArtworkDto representing the artwork with the specified ID.</returns>
-        IEnumerable<ArtworkDto> GetMyArtworks();
+        Task<IEnumerable<ReadArtworkDto>> GetAllArtworksAsync();
+
+        /// <summary>
+        /// Retrieves artworks created by the currently authenticated user from the database.
+        /// </summary>
+        Task<IEnumerable<ReadArtworkDto>> GetMyArtworksAsync(int userId);
+
+        #endregion
     }
 }

@@ -1,7 +1,7 @@
 ﻿using ArtAuctionHub.Application.DTOs.Bid;
 using ArtAuctionHub.Application.Interfaces;
 
-namespace ArtAuctionHub.Application.Services
+namespace ArtAuctionHub.Infrastructure.Services
 {
     /// <summary>
     /// A mock implementation of IBidService.

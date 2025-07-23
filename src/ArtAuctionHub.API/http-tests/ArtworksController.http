@@ -3,16 +3,38 @@
 @categoryId = 1
 
 POST http://localhost:5000/api/artworks
-Content-Type: application/json
+Content-Type: multipart/form-data; boundary=boundary
 
-{
-  "title": "Mona Lisa",
-  "codeName": "mona-lisa",
-  "description": "Famous painting.",
-  "imageUrl": "https://example.com/image.jpg",
-  "isAdultOnly": false,
-  "categoryId": {{categoryId}}
-}
+--boundary
+Content-Disposition: form-data; name="title"
+
+Mona Lisa
+--boundary
+Content-Disposition: form-data; name="codeName"
+
+mona-lisa
+--boundary
+Content-Disposition: form-data; name="description"
+
+Famous painting.
+--boundary
+Content-Disposition: form-data; name="imageUrl"
+
+https://example.com/image.jpg
+--boundary
+Content-Disposition: form-data; name="isAdultOnly"
+
+false
+--boundary
+Content-Disposition: form-data; name="categoryId"
+
+1
+--boundary
+Content-Disposition: form-data; name="imageFile"; filename="mona-lisa.jpg"
+Content-Type: image/jpeg
+
+< ./images/mona-lisa.jpg
+--boundary--
 
 ###
 
@@ -38,4 +60,4 @@ GET http://localhost:5000/api/artworks
 
 ###
 
-GET http://localhost:5000/api/artworks/my
+GET http://localhost:5000/api/artworks/my/1

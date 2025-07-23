@@ -4,7 +4,7 @@
     /// Data Transfer Object (DTO) used when registering a new user.
     /// This contains all necessary information to create a user account.
     /// </summary>
-    public class RegisterDto
+    public record RegisterDto
     {
         /// <summary>
         /// The username chosen by the user.

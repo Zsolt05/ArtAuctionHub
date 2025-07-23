@@ -2,7 +2,7 @@
 using ArtAuctionHub.Application.Interfaces;
 using System.Security.Claims;
 
-namespace ArtAuctionHub.Application.Services
+namespace ArtAuctionHub.Infrastructure.Services
 {
     /// <summary>
     /// A simple (mocked) implementation of IAuthService.

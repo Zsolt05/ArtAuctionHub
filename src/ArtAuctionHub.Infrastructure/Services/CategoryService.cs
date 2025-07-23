@@ -1,6 +1,6 @@
 ﻿using ArtAuctionHub.Application.Interfaces;
 
-namespace ArtAuctionHub.Application.Services
+namespace ArtAuctionHub.Infrastructure.Services
 {
     /// <summary>
     /// A mock implementation of ICategoryService.

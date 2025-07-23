@@ -5,109 +5,121 @@ using Microsoft.AspNetCore.Mvc;
 namespace ArtAuctionHub.API.Controllers
 {
     /// <summary>
-    /// The AuctionsController handles operations related to auctions,
-    /// such as starting, editing, deleting, and retrieving auction details.
+    /// Controller responsible for managing auction operations such as 
+    /// creating, updating, deleting, and retrieving auction details.
+    /// All operations are asynchronous and rely on the IAuctionService.
     /// </summary>
-    /// <param name="_auctionService"> An instance of IAuctionService to handle auction operations. Registered in the Dependency Injection (DI) container.</param>
-    [ApiController] // Indicates that this controller responds to web API requests.
-    [Route("api/auctions")] // Base route for all auction-related endpoints. (/api/auctions)
-    public class AuctionsController(IAuctionService _auctionService) : ControllerBase
+    [ApiController]
+    [Route("api/auctions")]
+    public class AuctionsController : ControllerBase
     {
+        private readonly IAuctionService _auctionService;
+
         /// <summary>
-        /// Starts a new auction for a given artwork.
+        /// Constructor that injects IAuctionService.
         /// </summary>
-        /// <param name="dto">The AuctionDto containing auction details (start/end date, artwork ID).</param>
-        /// <returns>A 201 Created response with the created auction data.</returns>
-        [HttpPost] // Matches POST /api/auctions.
-        public IActionResult StartAuction([FromBody] AuctionDto dto)
+        public AuctionsController(IAuctionService auctionService)
         {
-            // Future implementation:
-            // 1. Validate the auction details.
-            // 2. Link auction to artwork and save it.
-            var createdAuction = _auctionService.CreateAuction(dto);
-            return Ok(createdAuction);
+            _auctionService = auctionService;
         }
 
         /// <summary>
-        /// Edits an existing auction.
+        /// Starts a new auction.
         /// </summary>
-        /// <param name="id">The ID of the auction to edit.</param>
-        /// <param name="dto">The updated auction details.</param>
-        /// <returns>A 200 OK response with the updated auction.</returns>
-        [HttpPut]
-        [Route("{id}")] // Matches PUT /api/auctions/{id}.
-        public IActionResult EditAuction(int id, [FromBody] AuctionDto dto)
+        /// <param name="dto">Auction data (artwork ID, start/end dates, starting price).</param>
+        /// <returns>201 Created with the created auction data, or 400 BadRequest if the artwork does not exist.</returns>
+        [HttpPost]
+        public async Task<IActionResult> StartAuction([FromBody] AuctionDto dto)
         {
-            // Future implementation:
-            // 1. Check if the auction with the given ID exists.
-            // 2. Update its properties based on the provided dto.
-            // 3. Save changes to the database.
-            var updatedAuction = _auctionService.UpdateAuction(id, dto);
-            return Ok(updatedAuction);
+            try
+            {
+                var createdAuction = await _auctionService.CreateAuctionAsync(dto);
+                return CreatedAtAction(nameof(GetAuctionDetails), new { id = dto.ArtworkId }, createdAuction);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Updates an existing auction.
+        /// </summary>
+        /// <param name="id">ID of the auction to update.</param>
+        /// <param name="dto">Updated auction data.</param>
+        /// <returns>200 OK with the updated auction, 404 NotFound if the auction is missing, or 400 BadRequest if invalid data is provided.</returns>
+        [HttpPut("{id}")]
+        public async Task<IActionResult> EditAuction(int id, [FromBody] AuctionDto dto)
+        {
+            try
+            {
+                var updatedAuction = await _auctionService.UpdateAuctionAsync(id, dto);
+                return Ok(updatedAuction);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         /// <summary>
         /// Deletes an auction by its ID.
         /// </summary>
-        /// <param name="id">The ID of the auction.</param>
-        /// <returns>A 204 No Content response when deleted.</returns>
-        [HttpDelete]
-        [Route("{id}")] // Matches DELETE /api/auctions/{id}.
-        public IActionResult DeleteAuction(int id)
+        /// <param name="id">ID of the auction to delete.</param>
+        /// <returns>204 NoContent if deletion is successful, or 404 NotFound if the auction does not exist.</returns>
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteAuction(int id)
         {
-            // Future implementation:
-            // 1. Check if the auction with the given ID exists.
-            // 2. Delete it from the database.
-            _auctionService.DeleteAuction(id);
-            return NoContent(); // Returns 204 No Content on successful deletion.
+            try
+            {
+                await _auctionService.DeleteAuctionAsync(id);
+                return NoContent();
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
         }
 
         /// <summary>
-        /// Retrieves all active auctions.
+        /// Retrieves all currently active auctions.
         /// </summary>
-        /// <returns>A 200 OK response with active auctions.</returns>
-        [HttpGet]
-        [Route("active")] // Matches GET /api/auctions/active.
-        public IActionResult GetActiveAuctions()
+        /// <returns>200 OK with a list of active auctions.</returns>
+        [HttpGet("active")]
+        public async Task<IActionResult> GetActiveAuctions()
         {
-            // Future implementation:
-            // 1. Fetch active auctions from the database.
-            // 2. Return them in a suitable format (e.g., list of auction DTOs).
-            var activeAuctions = _auctionService.GetActiveAuctions();
+            var activeAuctions = await _auctionService.GetActiveAuctionsAsync();
             return Ok(activeAuctions);
         }
 
         /// <summary>
-        /// Retrieves auctions created by the current user.
+        /// Retrieves all auctions created by the current user.
+        /// (For now, returns all auctions without filtering by user.)
         /// </summary>
-        /// <returns>A 200 OK response with user's auctions.</returns>
-        [HttpGet]
-        [Route("my")] // Matches GET /api/auctions/my.
-        public IActionResult GetMyAuctions()
+        /// <returns>200 OK with a list of auctions.</returns>
+        [HttpGet("my")]
+        public async Task<IActionResult> GetMyAuctions()
         {
-            // Future implementation:
-            // 1. Fetch auctions created by the authenticated user.
-            // 2. Return them in a suitable format (e.g., list of auction DTOs).
-            var myAuctions = _auctionService.GetUserAuctions();
+            var myAuctions = await _auctionService.GetUserAuctionsAsync();
             return Ok(myAuctions);
         }
 
         /// <summary>
-        /// Retrieves details of a specific auction.
+        /// Retrieves details of a specific auction by ID.
         /// </summary>
-        /// <param name="id">The ID of the auction.</param>
-        /// <returns>A 200 OK response with auction details.</returns>
-        [HttpGet]
-        [Route("{id}")] // Matches GET /api/auctions/{id}.
-        public IActionResult GetAuctionDetails(int id)
+        /// <param name="id">ID of the auction.</param>
+        /// <returns>200 OK with auction details, or 404 NotFound if the auction does not exist.</returns>
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetAuctionDetails(int id)
         {
-            // Future implementation:
-            // 1. Fetch the auction details by ID from the database.
-            // 2. Return the auction data in a suitable format (e.g., auction DTO).
-            var auctionDetails = _auctionService.GetAuctionById(id);
+            var auctionDetails = await _auctionService.GetAuctionByIdAsync(id);
             if (auctionDetails == null)
             {
-                return NotFound(); // Returns 404 Not Found if the auction does not exist.
+                return NotFound(new { message = $"Auction with ID {id} not found." });
             }
             return Ok(auctionDetails);
         }
