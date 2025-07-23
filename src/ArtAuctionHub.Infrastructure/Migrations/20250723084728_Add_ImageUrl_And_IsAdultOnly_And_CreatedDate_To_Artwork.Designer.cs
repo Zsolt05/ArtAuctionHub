@@ -4,6 +4,7 @@ using ArtAuctionHub.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ArtAuctionHub.Infrastructure.Migrations
 {
     [DbContext(typeof(ArtAuctionHubDbContext))]
-    partial class ArtAuctionHubDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250723084728_Add_ImageUrl_And_IsAdultOnly_And_CreatedDate_To_Artwork")]
+    partial class Add_ImageUrl_And_IsAdultOnly_And_CreatedDate_To_Artwork
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -217,22 +220,6 @@ namespace ArtAuctionHub.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Users");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Email = "Buyer@test.com",
-                            PasswordHash = "$2a$12$UmdjxzKaFe4DF.74Y7P/8ug8bie1bSTFC4UHtC7ZW/g3vxFLyc1OS",
-                            Username = "Buyer"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Email = "Artist@test.com",
-                            PasswordHash = "$2a$12$8ZeSHcGMpER.zMQXp7BFWuMC7AMDIyFGIKCETTFYUFveb5Qz0Jeqq",
-                            Username = "Artist"
-                        });
                 });
 
             modelBuilder.Entity("ArtAuctionHub.Domain.Entities.UserFavorites", b =>
@@ -256,31 +243,19 @@ namespace ArtAuctionHub.Infrastructure.Migrations
                     b.ToTable("UserFavorites");
                 });
 
-            modelBuilder.Entity("ArtAuctionHub.Domain.Entities.UserRole", b =>
+            modelBuilder.Entity("RoleUser", b =>
                 {
-                    b.Property<int>("UserId")
+                    b.Property<int>("RolesId")
                         .HasColumnType("int");
 
-                    b.Property<int>("RoleId")
+                    b.Property<int>("UsersId")
                         .HasColumnType("int");
 
-                    b.HasKey("UserId", "RoleId");
+                    b.HasKey("RolesId", "UsersId");
 
-                    b.HasIndex("RoleId");
+                    b.HasIndex("UsersId");
 
-                    b.ToTable("UserRoles");
-
-                    b.HasData(
-                        new
-                        {
-                            UserId = 1,
-                            RoleId = 1
-                        },
-                        new
-                        {
-                            UserId = 2,
-                            RoleId = 2
-                        });
+                    b.ToTable("RoleUser");
                 });
 
             modelBuilder.Entity("ArtAuctionHub.Domain.Entities.Artwork", b =>
@@ -351,23 +326,19 @@ namespace ArtAuctionHub.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("ArtAuctionHub.Domain.Entities.UserRole", b =>
+            modelBuilder.Entity("RoleUser", b =>
                 {
-                    b.HasOne("ArtAuctionHub.Domain.Entities.Role", "Role")
-                        .WithMany("Users")
-                        .HasForeignKey("RoleId")
+                    b.HasOne("ArtAuctionHub.Domain.Entities.Role", null)
+                        .WithMany()
+                        .HasForeignKey("RolesId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("ArtAuctionHub.Domain.Entities.User", "User")
-                        .WithMany("Roles")
-                        .HasForeignKey("UserId")
+                    b.HasOne("ArtAuctionHub.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("UsersId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Role");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("ArtAuctionHub.Domain.Entities.Auction", b =>
@@ -380,18 +351,11 @@ namespace ArtAuctionHub.Infrastructure.Migrations
                     b.Navigation("Artworks");
                 });
 
-            modelBuilder.Entity("ArtAuctionHub.Domain.Entities.Role", b =>
-                {
-                    b.Navigation("Users");
-                });
-
             modelBuilder.Entity("ArtAuctionHub.Domain.Entities.User", b =>
                 {
                     b.Navigation("Artworks");
 
                     b.Navigation("Favorites");
-
-                    b.Navigation("Roles");
                 });
 #pragma warning restore 612, 618
         }

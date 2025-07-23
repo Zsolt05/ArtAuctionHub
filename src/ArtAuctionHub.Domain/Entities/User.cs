@@ -30,8 +30,8 @@
         /// </summary>
         public ICollection<Artwork> Artworks { get; set; } = [];
         /// <summary>
-        /// Navigation property for the roles assigned to the user.
+        /// Navigation property for the UserRoles associated with the user.
         /// </summary>
-        public ICollection<Role> Roles { get; set; } = [];
+        public ICollection<UserRole> Roles { get; set; } = [];
     }
 }

@@ -4,6 +4,7 @@ using ArtAuctionHub.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ArtAuctionHub.Infrastructure.Migrations
 {
     [DbContext(typeof(ArtAuctionHubDbContext))]
-    partial class ArtAuctionHubDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250723121256_Add_Initial_Roles_And_Users_Seed")]
+    partial class Add_Initial_Roles_And_Users_Seed
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

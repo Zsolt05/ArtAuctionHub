@@ -106,6 +106,9 @@ app.MapGet("/weatherforecast", () =>
 })
 .WithName("GetWeatherForecast"); // This names the endpoint (useful for documentation or linking)
 
+// This line adds automatic update database migrations.
+app.MigrateDatabase<ArtAuctionHubDbContext>();
+
 // Starts the application and begins listening for HTTP requests.
 // This is the final step where the app becomes active.
 app.Run();

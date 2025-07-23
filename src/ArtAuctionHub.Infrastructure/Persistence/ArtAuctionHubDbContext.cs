@@ -8,11 +8,8 @@ namespace ArtAuctionHub.Infrastructure.Persistence
     /// The ArtAuctionHubDbContext class manages all database access for the application.
     /// It defines DbSet properties that represent tables in the SQL Server database.
     /// </summary>
-    public class ArtAuctionHubDbContext : DbContext
+    public class ArtAuctionHubDbContext(DbContextOptions<ArtAuctionHubDbContext> options) : DbContext(options)
     {
-        public ArtAuctionHubDbContext(DbContextOptions<ArtAuctionHubDbContext> options)
-            : base(options) { }
-
         /// <summary>
         /// Represents the Users table in the database.
         /// </summary>
@@ -21,6 +18,10 @@ namespace ArtAuctionHub.Infrastructure.Persistence
         /// Represents the Roles table in the database.
         /// </summary>
         public DbSet<Role> Roles { get; set; }
+        /// <summary>
+        /// Represents the UserRoles table in the database, which is a join table for many-to-many relationships between Users and Roles.
+        /// </summary>
+        public DbSet<UserRole> UserRoles { get; set; }
         /// <summary>
         /// Represents the Artworks table in the database.
         /// </summary>
@@ -55,7 +56,10 @@ namespace ArtAuctionHub.Infrastructure.Persistence
                 entity.HasKey(u => u.Id);
                 entity.Property(u => u.Username).IsRequired().HasMaxLength(50);
                 entity.Property(u => u.Email).IsRequired().HasMaxLength(100);
-                entity.HasMany(u => u.Roles).WithMany(r => r.Users);
+                entity.HasMany(u => u.Roles)
+                      .WithOne(ur => ur.User)
+                      .HasForeignKey(ur => ur.UserId)
+                      .OnDelete(DeleteBehavior.Cascade);
             });
 
             // Configure Role entity
@@ -63,6 +67,24 @@ namespace ArtAuctionHub.Infrastructure.Persistence
             {
                 entity.HasKey(r => r.Id);
                 entity.Property(r => r.Name).IsRequired().HasMaxLength(50);
+                entity.HasMany(r => r.Users)
+                      .WithOne(ur => ur.Role)
+                      .HasForeignKey(ur => ur.RoleId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // Configure UserRole entity
+            modelBuilder.Entity<UserRole>(entity =>
+            {
+                entity.HasKey(ur => new { ur.UserId, ur.RoleId });
+                entity.HasOne(ur => ur.User)
+                      .WithMany(u => u.Roles)
+                      .HasForeignKey(ur => ur.UserId)
+                      .OnDelete(DeleteBehavior.Cascade);
+                entity.HasOne(ur => ur.Role)
+                      .WithMany(r => r.Users)
+                      .HasForeignKey(ur => ur.RoleId)
+                      .OnDelete(DeleteBehavior.Cascade);
             });
 
             // Configure Artwork entity
@@ -146,6 +168,30 @@ namespace ArtAuctionHub.Infrastructure.Persistence
                 new Category { Id = 1, Name = "Painting" },
                 new Category { Id = 2, Name = "Photography" },
                 new Category { Id = 3, Name = "Digital Art" }
+            );
+
+            // Seed initial data for Users
+            modelBuilder.Entity<User>().HasData(
+                new User
+                {
+                    Id = 1,
+                    Username = RoleNames.Buyer,
+                    Email = $"{RoleNames.Buyer}@test.com",
+                    PasswordHash = "$2a$12$UmdjxzKaFe4DF.74Y7P/8ug8bie1bSTFC4UHtC7ZW/g3vxFLyc1OS" // Example hash for "Buyer123!"
+                },
+                new User
+                {
+                    Id = 2,
+                    Username = RoleNames.Artist,
+                    Email = $"{RoleNames.Artist}@test.com",
+                    PasswordHash = "$2a$12$8ZeSHcGMpER.zMQXp7BFWuMC7AMDIyFGIKCETTFYUFveb5Qz0Jeqq" // Example hash for "Artist123!"
+                }
+            );
+
+            // Seed initial data for UserRoles
+            modelBuilder.Entity<UserRole>().HasData(
+                new UserRole { UserId = 1, RoleId = 1 }, // Buyer
+                new UserRole { UserId = 2, RoleId = 2 } // Artist
             );
         }
     }

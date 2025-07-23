@@ -14,8 +14,8 @@
         /// </summary>
         public string Name { get; set; } = default!;
         /// <summary>
-        /// A collection of users associated with this role.
+        /// A collection of UserRole entities that represent the many-to-many relationship
         /// </summary>
-        public ICollection<User> Users { get; set; } = [];
+        public ICollection<UserRole> Users { get; set; } = [];
     }
 }
