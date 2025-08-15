@@ -13,14 +13,14 @@ namespace ArtAuctionHub.Application.Interfaces
         /// Registers a new user with the provided registration data.
         /// </summary>
         /// <param name="dto">The registration data transfer object (DTO).</param>
-        void Register(RegisterDto dto);
+        Task RegisterAsync(RegisterDto dto);
 
         /// <summary>
         /// Authenticates a user based on their login credentials.
         /// </summary>
         /// <param name="dto">The login data transfer object (DTO).</param>
         /// <returns>A JWT token or any other form of authentication token.</returns>
-        string Login(LoginDto dto);
+        Task<string> LoginAsync(LoginDto dto);
 
         /// <summary>
         /// Retrieves details of the currently authenticated user.

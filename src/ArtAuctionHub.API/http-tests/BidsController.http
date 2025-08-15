@@ -5,7 +5,7 @@ Content-Type: application/json
 
 {
   "auctionId": 1,
-  "amount": 100.50
+  "amount": 101.50
 }
 
 ###

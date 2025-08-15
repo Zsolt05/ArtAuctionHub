@@ -18,15 +18,24 @@ namespace ArtAuctionHub.API.Controllers
         /// <param name="dto">The BidDto containing auction ID and bid amount.</param>
         /// <returns>A 200 OK response with confirmation of the bid.</returns>
         [HttpPost] // Matches POST /api/bids/place.
-        public IActionResult PlaceBid([FromBody] BidDto dto)
+        public async Task<IActionResult> PlaceBid([FromBody] BidDto dto)
         {
+            int userId = 1; // Placeholder for the current user's ID. In a future implementation, this would be retrieved from the authenticated user's context.
+
             // Future implementation would involve:
             // 1. Validate the dto (ensure the bid amount is valid).
             // 2. Check if the auction exists and is active.
             // 3. Check user is buying (not an artist).
             // 4. Save the bid to the database.
             // 5. Return the created bid or a confirmation message.
-            _bidService.PlaceBid(dto);
+            try
+            {
+                await _bidService.PlaceBidAsync(dto, userId);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Message = ex.Message }); // Returns 400 Bad Request with error message.
+            }
             return Ok(new { Message = "Bid placed successfully." });
         }
 
@@ -36,12 +45,14 @@ namespace ArtAuctionHub.API.Controllers
         /// <returns>A 200 OK response with user's bids.</returns>
         [HttpGet]
         [Route("my")] // Matches GET /api/bids/my.
-        public IActionResult GetMyBids()
+        public async Task<IActionResult> GetMyBids()
         {
+            int userId = 1; // Placeholder for the current user's ID. In a future implementation, this would be retrieved from the authenticated user's context.
+
             // Future implementation would involve:
             // 1. Fetching bids from the database where the user is the buyer.
             // 2. Returning the list of bids in a suitable format (e.g., list of BidDto).
-            var myBids = _bidService.GetMyBids();
+            var myBids = await _bidService.GetBidsForUserAsync(userId);
             return Ok(myBids); // Returns 200 OK with the user's bids.
         }
     }

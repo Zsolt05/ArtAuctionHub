@@ -9,6 +9,6 @@
         /// Retrieves a list of available artwork categories.
         /// </summary>
         /// <returns>A collection of category names.</returns>
-        IEnumerable<string> GetCategories();
+        Task<IEnumerable<string>> GetCategoriesAsync();
     }
 }

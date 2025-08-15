@@ -1,15 +1,19 @@
 ﻿using ArtAuctionHub.Application.Interfaces;
+using ArtAuctionHub.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
 
 namespace ArtAuctionHub.Infrastructure.Services
 {
     /// <summary>
     /// A mock implementation of ICategoryService.
     /// </summary>
-    public class CategoryService : ICategoryService
+    public class CategoryService(ArtAuctionHubDbContext dbContext) : ICategoryService
     {
-        public IEnumerable<string> GetCategories()
+        public async Task<IEnumerable<string>> GetCategoriesAsync()
         {
-            return new[] { "Painting", "Sculpture", "Digital Art" };
+            return await dbContext.Categories
+                .Select(c => c.Name)
+                .ToListAsync();
         }
     }
 }

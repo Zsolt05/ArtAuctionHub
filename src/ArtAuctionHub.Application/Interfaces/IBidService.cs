@@ -12,12 +12,13 @@ namespace ArtAuctionHub.Application.Interfaces
         /// Places a bid on an auction item.
         /// </summary>
         /// <param name="dto">Bid data transfer object containing the bid details.</param>
-        void PlaceBid(BidDto dto);
+        /// <param name="userId">The ID of the user placing the bid.</param>
+        Task PlaceBidAsync(BidDto dto, int userId);
 
         /// <summary>
-        /// Retrieves a list of all bids placed by the currently authenticated user.
+        /// Retrieves a list of all bids placed by a specific user.
         /// </summary>
         /// <returns>A collection of BidDto representing the user's bids.</returns>
-        IEnumerable<BidDto> GetMyBids();
+        Task<List<BidDto>> GetBidsForUserAsync(int userId);
     }
 }

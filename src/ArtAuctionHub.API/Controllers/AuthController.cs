@@ -31,17 +31,26 @@ namespace ArtAuctionHub.API.Controllers
         /// </param>
         /// <returns>
         /// A 200 OK response with a success message (this is a placeholder response).
+        /// A 400 Bad Request response if the registration fails (e.g., user already exists, invalid data).
         /// </returns>
         [HttpPost]
         [Route("register")] // Matches POST /api/auth/register.
-        public IActionResult Register([FromBody] RegisterDto dto)
+        public async Task<IActionResult> Register([FromBody] RegisterDto dto)
         {
             // In a real-world scenario, we would:
             // 1. Validate the dto (e.g., ensure the email is unique and the password is strong).
             // 2. Hash the password before storing it.
             // 3. Save the new user to the database.
             // Currently, we simply return a success message.
-            _authService.Register(dto);
+            try
+            {
+                await _authService.RegisterAsync(dto);
+            }
+            catch (Exception ex)
+            {
+                // Handle exceptions such as user already exists, invalid data, etc.
+                return BadRequest(new { Message = ex.Message });
+            }
             return Ok(new { Message = "User registered successfully." });
         }
 
@@ -53,18 +62,27 @@ namespace ArtAuctionHub.API.Controllers
         /// </param>
         /// <returns>
         /// A 200 OK response with a JWT token placeholder (in a future implementation, this would be a real token).
+        /// A 401 Unauthorized response if the login fails (e.g., invalid credentials).
         /// </returns>
         [HttpPost]
         [Route("login")] // Matches POST /api/auth/login.
-        public IActionResult Login([FromBody] LoginDto dto)
+        public async Task<IActionResult> Login([FromBody] LoginDto dto)
         {
             // Future implementation would include:
             // 1. Validate the provided credentials.
             // 2. Check the password hash against the stored hash in the database.
             // 3. Generate a JWT token if authentication is successful.
             // Here, we return a dummy token for demonstration purposes.
-            var token = _authService.Login(dto);
-            return Ok(new { Token = token });
+            try
+            {
+                var token = await _authService.LoginAsync(dto);
+                return Ok(new { Token = token });
+            }
+            catch (Exception ex)
+            {
+                // Handle exceptions such as invalid credentials, user not found, etc.
+                return Unauthorized(new { Message = ex.Message });
+            }
         }
 
         /// <summary>
