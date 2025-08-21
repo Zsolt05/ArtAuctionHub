@@ -60,4 +60,4 @@ GET http://localhost:5000/api/artworks
 
 ###
 
-GET http://localhost:5000/api/artworks/my/1
+GET http://localhost:5000/api/artworks/my

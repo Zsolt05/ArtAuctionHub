@@ -114,6 +114,10 @@ namespace ArtAuctionHub.Infrastructure.Persistence
                       .WithMany()
                       .HasForeignKey(a => a.ArtworkId)
                       .OnDelete(DeleteBehavior.Cascade);
+                entity.HasMany(a => a.Bids)
+                      .WithOne(b => b.Auction)
+                      .HasForeignKey(b => b.AuctionId)
+                      .OnDelete(DeleteBehavior.Cascade);
             });
 
             // Configure Bid entity
@@ -125,7 +129,7 @@ namespace ArtAuctionHub.Infrastructure.Persistence
                 entity.HasOne(b => b.Auction)
                       .WithMany(a => a.Bids)
                       .HasForeignKey(b => b.AuctionId)
-                      .OnDelete(DeleteBehavior.NoAction);
+                      .OnDelete(DeleteBehavior.Cascade);
                 entity.HasOne(b => b.User)
                       .WithMany()
                       .HasForeignKey(b => b.UserId)
@@ -150,11 +154,11 @@ namespace ArtAuctionHub.Infrastructure.Persistence
                 entity.HasOne(uf => uf.User)
                       .WithMany(u => u.Favorites)
                       .HasForeignKey(uf => uf.UserId)
-                      .OnDelete(DeleteBehavior.NoAction);
+                      .OnDelete(DeleteBehavior.Cascade);
                 entity.HasOne(uf => uf.Artwork)
                       .WithMany()
                       .HasForeignKey(uf => uf.ArtworkId)
-                      .OnDelete(DeleteBehavior.NoAction);
+                      .OnDelete(DeleteBehavior.Cascade);
             });
 
             // Seed initial data for Roles

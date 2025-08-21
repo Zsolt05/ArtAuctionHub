@@ -1,33 +1,49 @@
 ﻿using ArtAuctionHub.Application.DTOs.Auction;
 using ArtAuctionHub.Application.Interfaces;
 using ArtAuctionHub.Domain.Entities;
-using ArtAuctionHub.Infrastructure.Persistence;
-using Microsoft.EntityFrameworkCore;
+using ArtAuctionHub.Domain.Interfaces;
+using ArtAuctionHub.Domain.Interfaces.Repositories;
 
 namespace ArtAuctionHub.Infrastructure.Services
 {
     /// <summary>
-    /// Auction service implementation using EF Core with async operations.
+    /// Auction-oriented application service that orchestrates domain repositories.
+    /// This service has no EF Core dependency; it relies purely on repository abstractions,
+    /// which improves testability and keeps upper layers decoupled from the ORM.
     /// </summary>
     public class AuctionService : IAuctionService
     {
-        private readonly ArtAuctionHubDbContext _dbContext;
+        private readonly IAuctionRepository _auctions;
+        private readonly IRepository<Artwork> _artworks;
+        private readonly IUnitOfWork _uow;
 
-        public AuctionService(ArtAuctionHubDbContext dbContext)
+        /// <summary>
+        /// Creates a new instance of the service with the required dependencies.
+        /// </summary>
+        /// <param name="auctions">Repository for <see cref="Auction"/> aggregates.</param>
+        /// <param name="artworks">Generic repository for <see cref="Artwork"/> used to validate references.</param>
+        /// <param name="uow">Unit of Work coordinating persistence and transactions.</param>
+        public AuctionService(
+            IAuctionRepository auctions,
+            IRepository<Artwork> artworks,
+            IUnitOfWork uow)
         {
-            _dbContext = dbContext;
+            _auctions = auctions;
+            _artworks = artworks;
+            _uow = uow;
         }
 
         /// <summary>
-        /// Creates a new auction if the related artwork exists.
+        /// Creates a new auction if the referenced artwork exists.
         /// </summary>
+        /// <param name="dto">Input DTO carrying auction details.</param>
+        /// <returns>The same DTO or an enriched DTO after persistence.</returns>
+        /// <exception cref="ArgumentException">Thrown when the artwork cannot be found.</exception>
         public async Task<AuctionDto> CreateAuctionAsync(AuctionDto dto)
         {
-            var artworkExists = await _dbContext.Artworks.AnyAsync(a => a.Id == dto.ArtworkId);
+            var artworkExists = await _artworks.AnyAsync(a => a.Id == dto.ArtworkId);
             if (!artworkExists)
-            {
                 throw new ArgumentException($"Artwork with ID {dto.ArtworkId} does not exist.");
-            }
 
             var auction = new Auction
             {
@@ -37,88 +53,96 @@ namespace ArtAuctionHub.Infrastructure.Services
                 StartingPrice = dto.StartingPrice
             };
 
-            _dbContext.Auctions.Add(auction);
-            await _dbContext.SaveChangesAsync();
+            await _auctions.AddAsync(auction);
+            await _uow.SaveChangesAsync();
 
             return dto;
         }
 
         /// <summary>
-        /// Updates an existing auction if it exists.
+        /// Updates an existing auction if found; throws when the entity does not exist.
         /// </summary>
+        /// <param name="id">Auction identifier.</param>
+        /// <param name="dto">Updated values.</param>
+        /// <returns>The updated DTO.</returns>
+        /// <exception cref="KeyNotFoundException">When the auction cannot be located.</exception>
         public async Task<AuctionDto> UpdateAuctionAsync(int id, AuctionDto dto)
         {
-            var auction = await _dbContext.Auctions.FirstOrDefaultAsync(a => a.Id == id);
-            if (auction == null)
-            {
+            var auction = await _auctions.FirstOrDefaultAsync(a => a.Id == id);
+            if (auction is null)
                 throw new KeyNotFoundException($"Auction with ID {id} not found.");
-            }
 
             auction.StartDate = dto.StartDate;
             auction.EndDate = dto.EndDate;
             auction.StartingPrice = dto.StartingPrice;
             auction.ArtworkId = dto.ArtworkId;
 
-            await _dbContext.SaveChangesAsync();
+            _auctions.Update(auction);
+            await _uow.SaveChangesAsync();
+
             return dto;
         }
 
         /// <summary>
-        /// Deletes an auction by ID if it exists.
+        /// Deletes an auction by its identifier if it exists.
         /// </summary>
+        /// <param name="id">Auction identifier.</param>
+        /// <exception cref="KeyNotFoundException">When the auction cannot be located.</exception>
         public async Task DeleteAuctionAsync(int id)
         {
-            var auction = await _dbContext.Auctions.FirstOrDefaultAsync(a => a.Id == id);
-            if (auction == null)
-            {
+            var auction = await _auctions.FirstOrDefaultAsync(a => a.Id == id);
+            if (auction is null)
                 throw new KeyNotFoundException($"Auction with ID {id} not found.");
-            }
 
-            _dbContext.Auctions.Remove(auction);
-            await _dbContext.SaveChangesAsync();
+            _auctions.Remove(auction);
+            await _uow.SaveChangesAsync();
         }
 
         /// <summary>
-        /// Returns all currently active auctions.
+        /// Returns all currently active auctions based on <see cref="DateTime.UtcNow"/>.
         /// </summary>
         public async Task<IEnumerable<AuctionDto>> GetActiveAuctionsAsync()
         {
             var now = DateTime.UtcNow;
-            return await _dbContext.Auctions
-                .Where(a => a.StartDate <= now && a.EndDate >= now)
-                .Select(a => new AuctionDto
-                {
-                    ArtworkId = a.ArtworkId,
-                    StartDate = a.StartDate,
-                    EndDate = a.EndDate,
-                    StartingPrice = a.StartingPrice
-                })
-                .ToListAsync();
+            var items = await _auctions.ListActiveAsync(now);
+
+            return items.Select(a => new AuctionDto
+            {
+                ArtworkId = a.ArtworkId,
+                StartDate = a.StartDate,
+                EndDate = a.EndDate,
+                StartingPrice = a.StartingPrice
+            });
         }
 
         /// <summary>
-        /// Returns auctions created by a user (for now returns all auctions).
+        /// Returns auctions created/owned by the current user. If ownership is not modeled,
+        /// returns all auctions. The behavior is delegated to the repository.
         /// </summary>
         public async Task<IEnumerable<AuctionDto>> GetUserAuctionsAsync()
         {
-            return await _dbContext.Auctions
-                .Select(a => new AuctionDto
-                {
-                    ArtworkId = a.ArtworkId,
-                    StartDate = a.StartDate,
-                    EndDate = a.EndDate,
-                    StartingPrice = a.StartingPrice
-                })
-                .ToListAsync();
+            var items = await _auctions.ListForCurrentUserAsync();
+
+            return items.Select(a => new AuctionDto
+            {
+                ArtworkId = a.ArtworkId,
+                StartDate = a.StartDate,
+                EndDate = a.EndDate,
+                StartingPrice = a.StartingPrice
+            });
         }
 
         /// <summary>
-        /// Retrieves a single auction by its ID.
+        /// Retrieves a single auction by its identifier.
         /// </summary>
+        /// <param name="id">Auction identifier.</param>
+        /// <returns>
+        /// A populated <see cref="AuctionDto"/> when found; otherwise <c>null</c>.
+        /// </returns>
         public async Task<AuctionDto?> GetAuctionByIdAsync(int id)
         {
-            var auction = await _dbContext.Auctions.FirstOrDefaultAsync(a => a.Id == id);
-            if (auction == null) return null;
+            var auction = await _auctions.FirstOrDefaultAsync(a => a.Id == id);
+            if (auction is null) return null;
 
             return new AuctionDto
             {

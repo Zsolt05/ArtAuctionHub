@@ -62,10 +62,12 @@ namespace ArtAuctionHub.API.Controllers
         /// <summary>
         /// Retrieves artworks created by the currently authenticated user.
         /// </summary>
-        [HttpGet("my/{userId}")]
-        // GET /api/artworks/my/{userId}
-        public async Task<IActionResult> GetMyArtworksAsync(int userId)
+        [HttpGet("my")]
+        // GET /api/artworks/my
+        public async Task<IActionResult> GetMyArtworksAsync()
         {
+            int userId = 2; // Placeholder for the current user's ID. In a future implementation, this would be retrieved from the authenticated user's context.
+
             var artworks = await artworkService.GetMyArtworksAsync(userId);
             return Ok(artworks);
         }
