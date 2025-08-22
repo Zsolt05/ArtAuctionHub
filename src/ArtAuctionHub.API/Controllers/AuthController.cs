@@ -42,15 +42,7 @@ namespace ArtAuctionHub.API.Controllers
             // 2. Hash the password before storing it.
             // 3. Save the new user to the database.
             // Currently, we simply return a success message.
-            try
-            {
-                await _authService.RegisterAsync(dto);
-            }
-            catch (Exception ex)
-            {
-                // Handle exceptions such as user already exists, invalid data, etc.
-                return BadRequest(new { Message = ex.Message });
-            }
+            await _authService.RegisterAsync(dto);
             return Ok(new { Message = "User registered successfully." });
         }
 
@@ -73,16 +65,8 @@ namespace ArtAuctionHub.API.Controllers
             // 2. Check the password hash against the stored hash in the database.
             // 3. Generate a JWT token if authentication is successful.
             // Here, we return a dummy token for demonstration purposes.
-            try
-            {
-                var token = await _authService.LoginAsync(dto);
-                return Ok(new { Token = token });
-            }
-            catch (Exception ex)
-            {
-                // Handle exceptions such as invalid credentials, user not found, etc.
-                return Unauthorized(new { Message = ex.Message });
-            }
+            var token = await _authService.LoginAsync(dto);
+            return Ok(new { Token = token });
         }
 
         /// <summary>
@@ -100,11 +84,7 @@ namespace ArtAuctionHub.API.Controllers
             // 2. If authenticated, retrieve the user's details from the database.
             // 3. Return the user's information.
             var userInfo = _authService.GetCurrentUser(User);
-            if (userInfo == null)
-            {
-                return NotFound(new { Message = "User not found." });
-            }
-            return Ok(userInfo);
+            return userInfo == null ? throw new UnauthorizedAccessException("User is not authenticated.") : (IActionResult)Ok(userInfo);
         }
     }
 }

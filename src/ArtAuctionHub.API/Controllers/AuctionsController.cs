@@ -31,15 +31,8 @@ namespace ArtAuctionHub.API.Controllers
         [HttpPost]
         public async Task<IActionResult> StartAuction([FromBody] AuctionDto dto)
         {
-            try
-            {
-                var createdAuction = await _auctionService.CreateAuctionAsync(dto);
-                return CreatedAtAction(nameof(GetAuctionDetails), new { id = dto.ArtworkId }, createdAuction);
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            var createdAuction = await _auctionService.CreateAuctionAsync(dto);
+            return CreatedAtAction(nameof(GetAuctionDetails), new { id = dto.ArtworkId }, createdAuction);
         }
 
         /// <summary>
@@ -51,19 +44,8 @@ namespace ArtAuctionHub.API.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> EditAuction(int id, [FromBody] AuctionDto dto)
         {
-            try
-            {
-                var updatedAuction = await _auctionService.UpdateAuctionAsync(id, dto);
-                return Ok(updatedAuction);
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(new { message = ex.Message });
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            var updatedAuction = await _auctionService.UpdateAuctionAsync(id, dto);
+            return Ok(updatedAuction);
         }
 
         /// <summary>
@@ -74,15 +56,8 @@ namespace ArtAuctionHub.API.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteAuction(int id)
         {
-            try
-            {
-                await _auctionService.DeleteAuctionAsync(id);
-                return NoContent();
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(new { message = ex.Message });
-            }
+            await _auctionService.DeleteAuctionAsync(id);
+            return NoContent();
         }
 
         /// <summary>

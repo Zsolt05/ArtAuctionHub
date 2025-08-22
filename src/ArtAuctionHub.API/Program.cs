@@ -1,9 +1,12 @@
 ﻿using ArtAuctionHub.API.Extensions;
+using ArtAuctionHub.API.Filters;
+using ArtAuctionHub.API.Middlewares;
 using ArtAuctionHub.Application.Interfaces;
 using ArtAuctionHub.Application.Services;
+using ArtAuctionHub.Infrastructure.Extensions;
 using ArtAuctionHub.Infrastructure.Persistence;
 using ArtAuctionHub.Infrastructure.Services;
-using ArtAuctionHub.Infrastructure.Extensions;
+using Microsoft.AspNetCore.Mvc;
 
 // Creates a WebApplicationBuilder, which is used to configure
 // services and middleware for the application.
@@ -15,7 +18,17 @@ builder.Services.AddInfrastructure(builder.Configuration);
 // Registers controllers as services in the dependency injection container.
 // This enables us to create controllers (classes with [ApiController] attribute)
 // that define REST endpoints.
-builder.Services.AddControllers();
+// Adds a global action filter to validate models on all controllers.
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<ValidateModelFilter>();
+});
+
+// Disables the automatic model state validation that ASP.NET Core does.
+builder.Services.Configure<ApiBehaviorOptions>(o =>
+{
+    o.SuppressModelStateInvalidFilter = true;
+});
 
 // Registers application services in the dependency injection container.
 // These services can be injected into controllers or other services.
@@ -42,11 +55,17 @@ builder.Services.AddScoped<IFavoriteService, FavoriteService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 
 builder.Services.AddScoped<PasswordHasherService>();
+
+builder.Services.AddExceptionHandling();
 // Builds the WebApplication object from the builder.
 // This is the main object used to configure the app's request pipeline
 // and define routes, middleware, and more.
 var app = builder.Build();
 
+// Adds custom exception handling middleware to the request pipeline.
+// This middleware will catch unhandled exceptions and convert them
+// into standardized HTTP error responses.
+app.UseExceptionHandling();
 // Adds middleware that redirects HTTP requests to HTTPS.
 // This improves security by ensuring encrypted communication.
 // Example: http://localhost:5000 → https://localhost:7000

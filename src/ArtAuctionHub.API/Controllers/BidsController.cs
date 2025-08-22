@@ -28,14 +28,7 @@ namespace ArtAuctionHub.API.Controllers
             // 3. Check user is buying (not an artist).
             // 4. Save the bid to the database.
             // 5. Return the created bid or a confirmation message.
-            try
-            {
-                await _bidService.PlaceBidAsync(dto, userId);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { Message = ex.Message }); // Returns 400 Bad Request with error message.
-            }
+            await _bidService.PlaceBidAsync(dto, userId);
             return Ok(new { Message = "Bid placed successfully." });
         }
 
