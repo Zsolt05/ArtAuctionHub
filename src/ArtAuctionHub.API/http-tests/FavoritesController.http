@@ -1,12 +1,18 @@
 ﻿# HTTP test file for FavoritesController
 @artworkId = 1
 
-POST http://localhost:5000/api/favorites/{{artworkId}}
+### Add artwork to favorites
+POST {{host}}/api/favorites/{{artworkId}}
+Authorization: Bearer {{jwt_token}}
 
 ###
 
-DELETE http://localhost:5000/api/favorites/{{artworkId}}
+### Remove artwork from favorites
+DELETE {{host}}/api/favorites/{{artworkId}}
+Authorization: Bearer {{jwt_token}}
 
 ###
 
-GET http://localhost:5000/api/favorites
+### Get all favorites of current user
+GET {{host}}/api/favorites
+Authorization: Bearer {{jwt_token}}

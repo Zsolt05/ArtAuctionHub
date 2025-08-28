@@ -1,5 +1,8 @@
-﻿using ArtAuctionHub.Application.DTOs.Auction;
+﻿using ArtAuctionHub.API.Extensions;
+using ArtAuctionHub.Application.DTOs.Auction;
 using ArtAuctionHub.Application.Interfaces;
+using ArtAuctionHub.Shared.Constants;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ArtAuctionHub.API.Controllers
@@ -9,54 +12,54 @@ namespace ArtAuctionHub.API.Controllers
     /// creating, updating, deleting, and retrieving auction details.
     /// All operations are asynchronous and rely on the IAuctionService.
     /// </summary>
+    /// <remarks>
+    /// Constructor that injects IAuctionService.
+    /// </remarks>
     [ApiController]
     [Route("api/auctions")]
-    public class AuctionsController : ControllerBase
+    [Authorize]
+    public class AuctionsController(IAuctionService auctionService) : ControllerBase
     {
-        private readonly IAuctionService _auctionService;
-
-        /// <summary>
-        /// Constructor that injects IAuctionService.
-        /// </summary>
-        public AuctionsController(IAuctionService auctionService)
-        {
-            _auctionService = auctionService;
-        }
-
         /// <summary>
         /// Starts a new auction.
         /// </summary>
         /// <param name="dto">Auction data (artwork ID, start/end dates, starting price).</param>
         /// <returns>201 Created with the created auction data, or 400 BadRequest if the artwork does not exist.</returns>
         [HttpPost]
+        [Authorize(Roles = RoleNames.Artist)]
         public async Task<IActionResult> StartAuction([FromBody] AuctionDto dto)
         {
-            var createdAuction = await _auctionService.CreateAuctionAsync(dto);
+            int userId = User.GetUserId();
+            var createdAuction = await auctionService.CreateAuctionAsync(userId,dto);
             return CreatedAtAction(nameof(GetAuctionDetails), new { id = dto.ArtworkId }, createdAuction);
         }
 
         /// <summary>
         /// Updates an existing auction.
         /// </summary>
-        /// <param name="id">ID of the auction to update.</param>
+        /// <param name="auctionId">ID of the auction to update.</param>
         /// <param name="dto">Updated auction data.</param>
         /// <returns>200 OK with the updated auction, 404 NotFound if the auction is missing, or 400 BadRequest if invalid data is provided.</returns>
-        [HttpPut("{id}")]
-        public async Task<IActionResult> EditAuction(int id, [FromBody] AuctionDto dto)
+        [HttpPut("{auctionId}")]
+        [Authorize(Roles = RoleNames.Artist)]
+        public async Task<IActionResult> EditAuction(int auctionId, [FromBody] AuctionDto dto)
         {
-            var updatedAuction = await _auctionService.UpdateAuctionAsync(id, dto);
+            int userId = User.GetUserId();
+            var updatedAuction = await auctionService.UpdateAuctionAsync(userId, auctionId, dto);
             return Ok(updatedAuction);
         }
 
         /// <summary>
         /// Deletes an auction by its ID.
         /// </summary>
-        /// <param name="id">ID of the auction to delete.</param>
+        /// <param name="auctionId">ID of the auction to delete.</param>
         /// <returns>204 NoContent if deletion is successful, or 404 NotFound if the auction does not exist.</returns>
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteAuction(int id)
+        [HttpDelete("{auctionId}")]
+        [Authorize(Roles = RoleNames.Artist)]
+        public async Task<IActionResult> DeleteAuction(int auctionId)
         {
-            await _auctionService.DeleteAuctionAsync(id);
+            int userId = User.GetUserId();
+            await auctionService.DeleteAuctionAsync(userId, auctionId);
             return NoContent();
         }
 
@@ -67,7 +70,7 @@ namespace ArtAuctionHub.API.Controllers
         [HttpGet("active")]
         public async Task<IActionResult> GetActiveAuctions()
         {
-            var activeAuctions = await _auctionService.GetActiveAuctionsAsync();
+            var activeAuctions = await auctionService.GetActiveAuctionsAsync();
             return Ok(activeAuctions);
         }
 
@@ -77,9 +80,11 @@ namespace ArtAuctionHub.API.Controllers
         /// </summary>
         /// <returns>200 OK with a list of auctions.</returns>
         [HttpGet("my")]
+        [Authorize(Roles = RoleNames.Artist)]
         public async Task<IActionResult> GetMyAuctions()
         {
-            var myAuctions = await _auctionService.GetUserAuctionsAsync();
+            int userId = User.GetUserId();
+            var myAuctions = await auctionService.GetUserAuctionsAsync(userId);
             return Ok(myAuctions);
         }
 
@@ -91,7 +96,7 @@ namespace ArtAuctionHub.API.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetAuctionDetails(int id)
         {
-            var auctionDetails = await _auctionService.GetAuctionByIdAsync(id);
+            var auctionDetails = await auctionService.GetAuctionByIdAsync(id);
             if (auctionDetails == null)
             {
                 return NotFound(new { message = $"Auction with ID {id} not found." });

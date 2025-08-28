@@ -2,7 +2,9 @@
 @id = 1
 @categoryId = 1
 
-POST http://localhost:5000/api/artworks
+### Create artwork
+POST {{host}}/api/artworks
+Authorization: Bearer {{jwt_token}}
 Content-Type: multipart/form-data; boundary=boundary
 
 --boundary
@@ -38,7 +40,9 @@ Content-Type: image/jpeg
 
 ###
 
-PUT http://localhost:5000/api/artworks/{{id}}
+### Update artwork
+PUT {{host}}/api/artworks/{{id}}
+Authorization: Bearer {{jwt_token}}
 Content-Type: application/json
 
 {
@@ -52,12 +56,18 @@ Content-Type: application/json
 
 ###
 
-DELETE http://localhost:5000/api/artworks/{{id}}
+### Delete artwork
+DELETE {{host}}/api/artworks/{{id}}
+Authorization: Bearer {{jwt_token}}
 
 ###
 
-GET http://localhost:5000/api/artworks
+### Get all artworks
+GET {{host}}/api/artworks
+Authorization: Bearer {{jwt_token}}
 
 ###
 
-GET http://localhost:5000/api/artworks/my
+### Get my artworks
+GET {{host}}/api/artworks/my
+Authorization: Bearer {{jwt_token}}

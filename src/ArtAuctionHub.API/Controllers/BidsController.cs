@@ -1,5 +1,8 @@
-﻿using ArtAuctionHub.Application.DTOs.Bid;
+﻿using ArtAuctionHub.API.Extensions;
+using ArtAuctionHub.Application.DTOs.Bid;
 using ArtAuctionHub.Application.Interfaces;
+using ArtAuctionHub.Shared.Constants;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ArtAuctionHub.API.Controllers
@@ -10,6 +13,7 @@ namespace ArtAuctionHub.API.Controllers
     /// <param name="_bidService">An instance of IBidService to handle bid operations. Registered in the Dependency Injection (DI) container.</param>
     [ApiController] // Indicates that this controller responds to web API requests.
     [Route("api/bids")] // Base route for all bid-related endpoints. (/api/bids/place)
+    [Authorize]
     public class BidsController(IBidService _bidService) : ControllerBase
     {
         /// <summary>
@@ -18,16 +22,10 @@ namespace ArtAuctionHub.API.Controllers
         /// <param name="dto">The BidDto containing auction ID and bid amount.</param>
         /// <returns>A 200 OK response with confirmation of the bid.</returns>
         [HttpPost] // Matches POST /api/bids/place.
+        [Authorize(Roles = RoleNames.Buyer)] // Only users with the "Buyer" role can access this endpoint.
         public async Task<IActionResult> PlaceBid([FromBody] BidDto dto)
         {
-            int userId = 1; // Placeholder for the current user's ID. In a future implementation, this would be retrieved from the authenticated user's context.
-
-            // Future implementation would involve:
-            // 1. Validate the dto (ensure the bid amount is valid).
-            // 2. Check if the auction exists and is active.
-            // 3. Check user is buying (not an artist).
-            // 4. Save the bid to the database.
-            // 5. Return the created bid or a confirmation message.
+            int userId = User.GetUserId();
             await _bidService.PlaceBidAsync(dto, userId);
             return Ok(new { Message = "Bid placed successfully." });
         }
@@ -38,13 +36,10 @@ namespace ArtAuctionHub.API.Controllers
         /// <returns>A 200 OK response with user's bids.</returns>
         [HttpGet]
         [Route("my")] // Matches GET /api/bids/my.
+        [Authorize(Roles = RoleNames.Buyer)] // Only users with the "Buyer" role can access this endpoint.
         public async Task<IActionResult> GetMyBids()
         {
-            int userId = 1; // Placeholder for the current user's ID. In a future implementation, this would be retrieved from the authenticated user's context.
-
-            // Future implementation would involve:
-            // 1. Fetching bids from the database where the user is the buyer.
-            // 2. Returning the list of bids in a suitable format (e.g., list of BidDto).
+            int userId = User.GetUserId();
             var myBids = await _bidService.GetBidsForUserAsync(userId);
             return Ok(myBids); // Returns 200 OK with the user's bids.
         }

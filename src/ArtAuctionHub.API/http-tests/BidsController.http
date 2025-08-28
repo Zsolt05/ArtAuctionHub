@@ -1,6 +1,8 @@
 ﻿# HTTP test file for BidsController
 
-POST http://localhost:5000/api/bids
+### Place a new bid
+POST {{host}}/api/bids
+Authorization: Bearer {{jwt_token}}
 Content-Type: application/json
 
 {
@@ -10,4 +12,6 @@ Content-Type: application/json
 
 ###
 
-GET http://localhost:5000/api/bids/my
+### Get my bids
+GET {{host}}/api/bids/my
+Authorization: Bearer {{jwt_token}}

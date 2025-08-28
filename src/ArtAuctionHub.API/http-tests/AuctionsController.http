@@ -1,7 +1,9 @@
 ﻿# HTTP test file for AuctionsController
 @id = 1
 
-POST http://localhost:5000/api/auctions
+### Create auction
+POST {{host}}/api/auctions
+Authorization: Bearer {{jwt_token}}
 Content-Type: application/json
 
 {
@@ -13,7 +15,9 @@ Content-Type: application/json
 
 ###
 
-PUT http://localhost:5000/api/auctions/{{id}}
+### Update auction
+PUT {{host}}/api/auctions/{{id}}
+Authorization: Bearer {{jwt_token}}
 Content-Type: application/json
 
 {
@@ -25,16 +29,24 @@ Content-Type: application/json
 
 ###
 
-DELETE http://localhost:5000/api/auctions/{{id}}
+### Delete auction
+DELETE {{host}}/api/auctions/{{id}}
+Authorization: Bearer {{jwt_token}}
 
 ###
 
-GET http://localhost:5000/api/auctions/active
+### Get all active auctions
+GET {{host}}/api/auctions/active
+Authorization: Bearer {{jwt_token}}
 
 ###
 
-GET http://localhost:5000/api/auctions/my
+### Get my auctions
+GET {{host}}/api/auctions/my
+Authorization: Bearer {{jwt_token}}
 
 ###
 
-GET http://localhost:5000/api/auctions/{{id}}
+### Get auction by id
+GET {{host}}/api/auctions/{{id}}
+Authorization: Bearer {{jwt_token}}

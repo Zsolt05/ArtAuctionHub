@@ -1,5 +1,8 @@
-﻿using ArtAuctionHub.Application.DTOs.ArtWork;
+﻿using ArtAuctionHub.API.Extensions;
+using ArtAuctionHub.Application.DTOs.ArtWork;
 using ArtAuctionHub.Application.Interfaces;
+using ArtAuctionHub.Shared.Constants;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ArtAuctionHub.API.Controllers
@@ -10,6 +13,7 @@ namespace ArtAuctionHub.API.Controllers
     /// <param name="artworkService">An instance of IArtworkService to handle artwork operations. Registered in the Dependency Injection (DI) container.</param>
     [ApiController] // Indicates that this controller responds to web API requests.
     [Route("api/artworks")] // Base route for all artwork-related endpoints. (/api/artworks)
+    [Authorize]
     public class ArtworksController(IArtworkService artworkService) : ControllerBase
     {
         /// <summary>
@@ -19,6 +23,7 @@ namespace ArtAuctionHub.API.Controllers
         /// <param name="imageFile">The image file to be uploaded.</param>
         /// <returns>Returns the created artwork data.</returns>
         [HttpPost]
+        [Authorize(Roles = RoleNames.Artist)] // Only users with the "Artist" role can access this endpoint.
         // POST /api/artworks
         public async Task<IActionResult> CreateArtworkAsync([FromForm] ArtworkDto dto, [FromForm] IFormFile imageFile)
         {
@@ -30,6 +35,7 @@ namespace ArtAuctionHub.API.Controllers
         /// Updates an existing artwork (excluding image).
         /// </summary>
         [HttpPut("{id}")]
+        [Authorize(Roles = RoleNames.Artist)] // Only users with the "Artist" role can access this endpoint.
         // PUT /api/artworks/{id}
         public async Task<IActionResult> UpdateArtworkAsync(int id, [FromBody] ArtworkDto dto)
         {
@@ -41,6 +47,7 @@ namespace ArtAuctionHub.API.Controllers
         /// Deletes an artwork and its image.
         /// </summary>
         [HttpDelete("{id}")]
+        [Authorize(Roles = RoleNames.Artist)] // Only users with the "Artist" role can access this endpoint.
         // DELETE /api/artworks/{id}
         public async Task<IActionResult> DeleteArtworkAsync(int id)
         {
@@ -63,11 +70,11 @@ namespace ArtAuctionHub.API.Controllers
         /// Retrieves artworks created by the currently authenticated user.
         /// </summary>
         [HttpGet("my")]
+        [Authorize(Roles = RoleNames.Artist)]
         // GET /api/artworks/my
         public async Task<IActionResult> GetMyArtworksAsync()
         {
-            int userId = 2; // Placeholder for the current user's ID. In a future implementation, this would be retrieved from the authenticated user's context.
-
+            int userId = User.GetUserId();
             var artworks = await artworkService.GetMyArtworksAsync(userId);
             return Ok(artworks);
         }

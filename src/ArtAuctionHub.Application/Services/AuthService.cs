@@ -4,6 +4,7 @@ using ArtAuctionHub.Application.Interfaces;
 using ArtAuctionHub.Domain.Entities;
 using ArtAuctionHub.Domain.Interfaces;
 using ArtAuctionHub.Domain.Interfaces.Repositories;
+using ArtAuctionHub.Shared.Constants;
 
 namespace ArtAuctionHub.Application.Services
 {
@@ -22,11 +23,13 @@ namespace ArtAuctionHub.Application.Services
     /// <param name="roles">Role repository.</param>
     /// <param name="userRoles">User-role link repository.</param>
     /// <param name="uow">Unit of work for coordinating transactions and persistence.</param>
+    /// <param name="jwt">JWT token factory.</param>
     public sealed class AuthService(
         IUserRepository users,
         IRoleRepository roles,
         IUserRoleRepository userRoles,
-        IUnitOfWork uow) : IAuthService
+        IUnitOfWork uow,
+        IJwtTokenFactory jwt) : IAuthService
     {
         /// <summary>
         /// Registers a new user and assigns the requested role atomically.
@@ -75,26 +78,41 @@ namespace ArtAuctionHub.Application.Services
         /// <param name="dto">Login data.</param>
         /// <returns>Mocked token string representing an authenticated session.</returns>
         /// <exception cref="UnauthorizedAccessException">Thrown when credentials are invalid.</exception>
-        public async Task<string> LoginAsync(LoginDto dto)
+        public async Task<AuthResultDto> LoginAsync(LoginDto dto)
         {
             var user = await users.GetByEmailAsync(dto.Email).ConfigureAwait(false);
 
             if (user is null || !PasswordHasherService.VerifyPassword(dto.Password, user.PasswordHash))
                 throw new UnauthorizedAccessException("Invalid email or password.");
 
-            return "mocked-jwt-token";
+            var roleNames = await userRoles.GetRoleNamesForUserAsync(user.Id);
+
+            (string token, DateTime expires) = jwt.CreateToken(user.Id, user.Username, user.Email, roleNames);
+
+            return new AuthResultDto(token, expires);
         }
 
-        /// <summary>
-        /// Projects a minimal representation of the current principal.
-        /// </summary>
-        /// <param name="user">Current <see cref="ClaimsPrincipal"/>.</param>
-        /// <returns>Anonymous DTO with <c>Username</c> and <c>Authenticated</c> fields.</returns>
-        public object GetCurrentUser(ClaimsPrincipal user)
-            => new
+        /// <inheritdoc/>
+        public CurrentUserDto GetCurrentUser(ClaimsPrincipal user)
+        {
+            if (user?.Identity is not { IsAuthenticated: true })
             {
-                Username = user.Identity?.Name ?? "Anonymous",
-                Authenticated = user.Identity?.IsAuthenticated ?? false
+                return new CurrentUserDto
+                {
+                    Username = "Anonymous",
+                    Email = null,
+                    Authenticated = false,
+                    Roles = Array.Empty<string>()
+                };
+            }
+
+            return new CurrentUserDto
+            {
+                Username = user.Identity!.Name ?? "(no-username)",
+                Email = user.FindFirst(ClaimTypes.Email)?.Value,
+                Authenticated = true,
+                Roles = user.FindAll(ClaimTypes.Role).Select(r => r.Value).ToArray()
             };
+        }
     }
 }

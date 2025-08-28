@@ -1,5 +1,6 @@
 ﻿using ArtAuctionHub.Application.DTOs.Auth;
 using ArtAuctionHub.Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ArtAuctionHub.API.Controllers
@@ -8,21 +9,14 @@ namespace ArtAuctionHub.API.Controllers
     /// The AuthController handles authentication-related requests.
     /// It exposes endpoints for user registration, login, and retrieving the current user information.
     /// </summary>
+    /// <remarks>
+    /// Constructor for AuthController.
+    /// </remarks>
+    /// <param name="authService">An implementation of IAuthService to handle authentication operations. Registered in the Dependency Injection (DI) container.</param>
     [ApiController] // Indicates that this controller responds to web API requests.
     [Route("api/auth")] // Base route for authentication-related endpoints. (/api/auth)
-    public class AuthController : ControllerBase
+    public class AuthController(IAuthService authService) : ControllerBase
     {
-        private readonly IAuthService _authService;
-
-        /// <summary>
-        /// Constructor for AuthController.
-        /// </summary>
-        /// <param name="authService">An implementation of IAuthService to handle authentication operations. Registered in the Dependency Injection (DI) container.</param>
-        public AuthController(IAuthService authService)
-        {
-            _authService = authService;
-        }
-
         /// <summary>
         /// Registers a new user based on the data provided in the request body.
         /// </summary>
@@ -37,12 +31,7 @@ namespace ArtAuctionHub.API.Controllers
         [Route("register")] // Matches POST /api/auth/register.
         public async Task<IActionResult> Register([FromBody] RegisterDto dto)
         {
-            // In a real-world scenario, we would:
-            // 1. Validate the dto (e.g., ensure the email is unique and the password is strong).
-            // 2. Hash the password before storing it.
-            // 3. Save the new user to the database.
-            // Currently, we simply return a success message.
-            await _authService.RegisterAsync(dto);
+            await authService.RegisterAsync(dto);
             return Ok(new { Message = "User registered successfully." });
         }
 
@@ -60,12 +49,7 @@ namespace ArtAuctionHub.API.Controllers
         [Route("login")] // Matches POST /api/auth/login.
         public async Task<IActionResult> Login([FromBody] LoginDto dto)
         {
-            // Future implementation would include:
-            // 1. Validate the provided credentials.
-            // 2. Check the password hash against the stored hash in the database.
-            // 3. Generate a JWT token if authentication is successful.
-            // Here, we return a dummy token for demonstration purposes.
-            var token = await _authService.LoginAsync(dto);
+            var token = await authService.LoginAsync(dto);
             return Ok(new { Token = token });
         }
 
@@ -77,13 +61,10 @@ namespace ArtAuctionHub.API.Controllers
         /// </returns>
         [HttpGet]
         [Route("me")] // Matches GET /api/auth/me.
+        [Authorize]
         public IActionResult Me()
         {
-            //Future implementation would include:
-            // 1. Checking if the user is authenticated (e.g., via a JWT token).
-            // 2. If authenticated, retrieve the user's details from the database.
-            // 3. Return the user's information.
-            var userInfo = _authService.GetCurrentUser(User);
+            var userInfo = authService.GetCurrentUser(User);
             return userInfo == null ? throw new UnauthorizedAccessException("User is not authenticated.") : (IActionResult)Ok(userInfo);
         }
     }

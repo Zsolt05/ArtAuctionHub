@@ -1,3 +1,5 @@
 ﻿# HTTP test file for CategoriesController
 
-GET http://localhost:5000/api/categories
+### Get all categories
+GET {{host}}/api/categories
+Authorization: Bearer {{jwt_token}}

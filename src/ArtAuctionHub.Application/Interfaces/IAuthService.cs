@@ -19,14 +19,14 @@ namespace ArtAuctionHub.Application.Interfaces
         /// Authenticates a user based on their login credentials.
         /// </summary>
         /// <param name="dto">The login data transfer object (DTO).</param>
-        /// <returns>A JWT token or any other form of authentication token.</returns>
-        Task<string> LoginAsync(LoginDto dto);
+        /// <returns>A JWT token.</returns>
+        Task<AuthResultDto> LoginAsync(LoginDto dto);
 
         /// <summary>
         /// Retrieves details of the currently authenticated user.
         /// </summary>
         /// <param name="user">The claims principal (authenticated user context).</param>
         /// <returns>Information about the current user.</returns>
-        object GetCurrentUser(ClaimsPrincipal user);
+        CurrentUserDto GetCurrentUser(ClaimsPrincipal user);
     }
 }

@@ -13,6 +13,10 @@ using Microsoft.AspNetCore.Mvc;
 // Think of it as the setup phase of your app.
 var builder = WebApplication.CreateBuilder(args);
 
+// Adds JWT authentication services to the application.
+builder.Services.AddJwtAuth(builder.Configuration);
+
+// Adds database-related services, including the DbContext and repositories.
 builder.Services.AddInfrastructure(builder.Configuration);
 
 // Registers controllers as services in the dependency injection container.
@@ -71,6 +75,11 @@ app.UseExceptionHandling();
 // Example: http://localhost:5000 → https://localhost:7000
 app.UseHttpsRedirection();
 
+// Adds authentication middleware to the request pipeline.
+app.UseAuthentication();
+// Adds authorization middleware to the request pipeline.
+app.UseAuthorization();
+
 // Maps all controller endpoints to the request pipeline.
 // If we have controllers (e.g., AuthController), 
 // their routes will be automatically recognized and served.
@@ -127,7 +136,7 @@ app.MigrateDatabase<ArtAuctionHubDbContext>();
 
 // Starts the application and begins listening for HTTP requests.
 // This is the final step where the app becomes active.
-app.Run();
+await app.RunAsync();
 
 /// <summary>
 /// Represents a single day's weather forecast.

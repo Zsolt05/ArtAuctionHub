@@ -25,8 +25,9 @@ namespace ArtAuctionHub.Domain.Interfaces.Repositories
         /// Retrieves all auctions "owned by" the current user or scope. If ownership is not
         /// modeled yet, this can temporarily return all auctions. Kept here to make the intent explicit.
         /// </summary>
+        /// <param name="userId">The ID of the current user.</param>
         /// <param name="ct">Cancellation token.</param>
         /// <returns>A list of <see cref="Auction"/> entities.</returns>
-        Task<List<Auction>> ListForCurrentUserAsync(CancellationToken ct = default);
+        Task<List<Auction>> ListForCurrentUserAsync(int userId, CancellationToken ct = default);
     }
 }

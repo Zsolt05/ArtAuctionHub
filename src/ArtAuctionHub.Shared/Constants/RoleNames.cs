@@ -5,10 +5,10 @@
         /// <summary>
         /// Represents the role of a buyer in the auction system.
         /// </summary>
-        public static readonly string Buyer = "Buyer";
+        public const string Buyer = "Buyer";
         /// <summary>
         /// Represents the role of an artist in the auction system.
         /// </summary>
-        public static readonly string Artist = "Artist";
+        public const string Artist = "Artist";
     }
 }

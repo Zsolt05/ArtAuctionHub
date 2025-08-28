@@ -1,6 +1,7 @@
 # HTTP test file for AuthController
 
-POST http://localhost:5000/api/auth/register
+### Register user
+POST {{host}}/api/auth/register
 Content-Type: application/json
 
 {
@@ -13,7 +14,8 @@ Content-Type: application/json
 
 ###
 
-POST http://localhost:5000/api/auth/login
+### Login user (copy JWT from response and set it to {{jwt_token}} in the environment)
+POST {{host}}/api/auth/login
 Content-Type: application/json
 
 {
@@ -23,5 +25,6 @@ Content-Type: application/json
 
 ###
 
-GET http://localhost:5000/api/auth/me
-Content-Type: application/json
+### Get current user (JWT needed from login)
+GET {{host}}/api/auth/me
+Authorization: Bearer {{jwt_token}}

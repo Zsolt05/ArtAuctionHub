@@ -26,8 +26,7 @@ namespace ArtAuctionHub.Infrastructure.Persistence.Repositories
                 .ToListAsync(ct);
 
         /// <inheritdoc />
-        public Task<List<Auction>> ListForCurrentUserAsync(CancellationToken ct = default)
-            // TODO: when ownership is introduced (e.g., a.UserId == currentUserId)
-            => _set.ToListAsync(ct);
+        public Task<List<Auction>> ListForCurrentUserAsync(int userId, CancellationToken ct = default)
+            => _set.Where(a => a.Artwork.ArtistId == userId).ToListAsync(ct);
     }
 }

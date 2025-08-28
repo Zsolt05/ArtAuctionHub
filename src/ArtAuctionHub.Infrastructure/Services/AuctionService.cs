@@ -33,15 +33,10 @@ namespace ArtAuctionHub.Infrastructure.Services
             _uow = uow;
         }
 
-        /// <summary>
-        /// Creates a new auction if the referenced artwork exists.
-        /// </summary>
-        /// <param name="dto">Input DTO carrying auction details.</param>
-        /// <returns>The same DTO or an enriched DTO after persistence.</returns>
-        /// <exception cref="ArgumentException">Thrown when the artwork cannot be found.</exception>
-        public async Task<AuctionDto> CreateAuctionAsync(AuctionDto dto)
+        /// <inheritdoc />
+        public async Task<AuctionDto> CreateAuctionAsync(int userId, AuctionDto dto)
         {
-            var artworkExists = await _artworks.AnyAsync(a => a.Id == dto.ArtworkId);
+            var artworkExists = await _artworks.AnyAsync(a => a.Id == dto.ArtworkId && a.ArtistId == userId);
             if (!artworkExists)
                 throw new ArgumentException($"Artwork with ID {dto.ArtworkId} does not exist.");
 
@@ -59,18 +54,12 @@ namespace ArtAuctionHub.Infrastructure.Services
             return dto;
         }
 
-        /// <summary>
-        /// Updates an existing auction if found; throws when the entity does not exist.
-        /// </summary>
-        /// <param name="id">Auction identifier.</param>
-        /// <param name="dto">Updated values.</param>
-        /// <returns>The updated DTO.</returns>
-        /// <exception cref="KeyNotFoundException">When the auction cannot be located.</exception>
-        public async Task<AuctionDto> UpdateAuctionAsync(int id, AuctionDto dto)
+        /// <inheritdoc />
+        public async Task<AuctionDto> UpdateAuctionAsync(int userId, int auctionId, AuctionDto dto)
         {
-            var auction = await _auctions.FirstOrDefaultAsync(a => a.Id == id);
+            var auction = await _auctions.FirstOrDefaultAsync(a => a.Id == auctionId && a.Artwork.ArtistId == userId);
             if (auction is null)
-                throw new KeyNotFoundException($"Auction with ID {id} not found.");
+                throw new KeyNotFoundException($"Auction with ID {auctionId} not found.");
 
             auction.StartDate = dto.StartDate;
             auction.EndDate = dto.EndDate;
@@ -83,24 +72,18 @@ namespace ArtAuctionHub.Infrastructure.Services
             return dto;
         }
 
-        /// <summary>
-        /// Deletes an auction by its identifier if it exists.
-        /// </summary>
-        /// <param name="id">Auction identifier.</param>
-        /// <exception cref="KeyNotFoundException">When the auction cannot be located.</exception>
-        public async Task DeleteAuctionAsync(int id)
+        /// <inheritdoc />
+        public async Task DeleteAuctionAsync(int userId, int auctionId)
         {
-            var auction = await _auctions.FirstOrDefaultAsync(a => a.Id == id);
+            var auction = await _auctions.FirstOrDefaultAsync(a => a.Id == auctionId && a.Artwork.ArtistId == userId);
             if (auction is null)
-                throw new KeyNotFoundException($"Auction with ID {id} not found.");
+                throw new KeyNotFoundException($"Auction with ID {auctionId} not found.");
 
             _auctions.Remove(auction);
             await _uow.SaveChangesAsync();
         }
 
-        /// <summary>
-        /// Returns all currently active auctions based on <see cref="DateTime.UtcNow"/>.
-        /// </summary>
+        /// <inheritdoc />
         public async Task<IEnumerable<AuctionDto>> GetActiveAuctionsAsync()
         {
             var now = DateTime.UtcNow;
@@ -115,13 +98,11 @@ namespace ArtAuctionHub.Infrastructure.Services
             });
         }
 
-        /// <summary>
-        /// Returns auctions created/owned by the current user. If ownership is not modeled,
-        /// returns all auctions. The behavior is delegated to the repository.
-        /// </summary>
-        public async Task<IEnumerable<AuctionDto>> GetUserAuctionsAsync()
+
+        /// <inheritdoc />
+        public async Task<IEnumerable<AuctionDto>> GetUserAuctionsAsync(int userId)
         {
-            var items = await _auctions.ListForCurrentUserAsync();
+            var items = await _auctions.ListForCurrentUserAsync(userId);
 
             return items.Select(a => new AuctionDto
             {
@@ -132,13 +113,8 @@ namespace ArtAuctionHub.Infrastructure.Services
             });
         }
 
-        /// <summary>
-        /// Retrieves a single auction by its identifier.
-        /// </summary>
-        /// <param name="id">Auction identifier.</param>
-        /// <returns>
-        /// A populated <see cref="AuctionDto"/> when found; otherwise <c>null</c>.
-        /// </returns>
+
+        /// <inheritdoc />
         public async Task<AuctionDto?> GetAuctionByIdAsync(int id)
         {
             var auction = await _auctions.FirstOrDefaultAsync(a => a.Id == id);

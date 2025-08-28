@@ -1,4 +1,5 @@
 ﻿using ArtAuctionHub.Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ArtAuctionHub.API.Controllers
@@ -12,6 +13,7 @@ namespace ArtAuctionHub.API.Controllers
     /// <param name="categoryService">An instance of ICategoryService to handle category operations. Registered in the Dependency Injection (DI) container.</param>
     [ApiController] // Indicates that this controller responds to web API requests.
     [Route("api/categories")] // Base route for category-related endpoints. (/api/categories)
+    [Authorize]
     public class CategoriesController(ICategoryService categoryService) : ControllerBase
     {
 

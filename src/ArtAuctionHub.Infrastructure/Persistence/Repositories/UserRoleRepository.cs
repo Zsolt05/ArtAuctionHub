@@ -7,10 +7,19 @@ namespace ArtAuctionHub.Infrastructure.Persistence.Repositories
     /// <summary>
     /// EF Core based implementation of <see cref="IUserRoleRepository"/>.
     /// </summary>
-    internal sealed class UserRoleRepository : EfRepository<UserRole>, IUserRoleRepository
+    internal sealed class UserRoleRepository(ArtAuctionHubDbContext db) : EfRepository<UserRole>(db), IUserRoleRepository
     {
-        private readonly ArtAuctionHubDbContext _db;
-        public UserRoleRepository(ArtAuctionHubDbContext db) : base(db) => _db = db;
+        /// <inheritdoc/>
+        public Task<IEnumerable<string>> GetRoleNamesForUserAsync(int userId)
+        {
+            return _set
+                .AsNoTracking()
+                .Where(ur => ur.UserId == userId)
+                .Include(ur => ur.Role)
+                .Select(ur => ur.Role!.Name)
+                .ToListAsync()
+                .ContinueWith(t => (IEnumerable<string>)t.Result);
+        }
 
         /// <inheritdoc/>
         public Task<bool> HasRoleAsync(int userId, int roleId, CancellationToken ct = default)
