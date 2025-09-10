@@ -1,8 +1,10 @@
-﻿using ArtAuctionHub.Application.DTOs.ArtWork;
+﻿using System.Security.Claims;
+using ArtAuctionHub.Application.DTOs.ArtWork;
 using ArtAuctionHub.Application.Interfaces;
 using ArtAuctionHub.Domain.Entities;
 using ArtAuctionHub.Domain.Interfaces;
 using ArtAuctionHub.Domain.Interfaces.Repositories;
+using ArtAuctionHub.Shared.Extensions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Hosting;
 
@@ -43,7 +45,7 @@ namespace ArtAuctionHub.Infrastructure.Services
         /// <param name="imageFile">Uploaded file to be stored under the <c>uploads</c> folder.</param>
         /// <returns>A read model for the created artwork.</returns>
         /// <exception cref="ArgumentException">Thrown when the file is missing or has an invalid extension.</exception>
-        public async Task<ReadArtworkDto> CreateArtworkAsync(ArtworkDto dto, IFormFile imageFile)
+        public async Task<ReadArtworkDto> CreateArtworkAsync(ArtworkDto dto, IFormFile imageFile, ClaimsPrincipal user)
         {
             if (imageFile is null || imageFile.Length == 0)
                 throw new ArgumentException("Image file is required.", nameof(imageFile));
@@ -59,8 +61,8 @@ namespace ArtAuctionHub.Infrastructure.Services
                 Description = dto.Description,
                 IsAdultOnly = dto.IsAdultOnly,
                 CategoryId = dto.CategoryId,
-                ArtistId = 2,                 // TODO: replace with the actual logged-in artist id
-                ArtistName = "Unknown Artist" // TODO: replace with real artist data
+                ArtistId = user.GetUserId(),
+                ArtistName = user.GetUserName()
             };
 
             // Ensure folder exists
@@ -102,10 +104,15 @@ namespace ArtAuctionHub.Infrastructure.Services
         /// <param name="dto">Incoming changes.</param>
         /// <returns>The updated read model.</returns>
         /// <exception cref="KeyNotFoundException">Thrown if the artwork does not exist.</exception>
-        public async Task<ReadArtworkDto> UpdateArtworkAsync(int id, ArtworkDto dto)
+        public async Task<ReadArtworkDto> UpdateArtworkAsync(int id, ArtworkDto dto, ClaimsPrincipal user)
         {
             var artwork = await _artworks.GetByIdAsync(id)
                 ?? throw new KeyNotFoundException("Artwork not found.");
+
+            if (artwork.ArtistId != user.GetUserId())
+            {
+                throw new UnauthorizedAccessException("You are not authorized to update this artwork.");
+            }
 
             artwork.Title = dto.Title;
             artwork.Description = dto.Description;
@@ -134,10 +141,15 @@ namespace ArtAuctionHub.Infrastructure.Services
         /// The entity deletion and file I/O are not transactional; consider Outbox/compensation if needed.
         /// </summary>
         /// <param name="id">Artwork identifier.</param>
-        public async Task DeleteArtworkAsync(int id)
+        public async Task DeleteArtworkAsync(int id, ClaimsPrincipal user)
         {
             var artwork = await _artworks.GetByIdAsync(id);
             if (artwork is null) return;
+
+            if (artwork.ArtistId != user.GetUserId())
+            {
+                throw new UnauthorizedAccessException("You are not authorized to delete this artwork.");
+            }
 
             var imagePath = Path.Combine(_environment.ContentRootPath, "uploads",
                                          Path.GetFileName(artwork.ImageUrl ?? string.Empty));
@@ -174,7 +186,6 @@ namespace ArtAuctionHub.Infrastructure.Services
         /// <param name="userId">The current user's id (to be wired from auth later).</param>
         public async Task<IEnumerable<ReadArtworkDto>> GetMyArtworksAsync(int userId)
         {
-            // TODO: replace with the real artist ↔ user mapping when auth is wired.
             var entities = await _artworks.GetByArtistIdAsync(userId);
             return entities.Select(a => new ReadArtworkDto
             {

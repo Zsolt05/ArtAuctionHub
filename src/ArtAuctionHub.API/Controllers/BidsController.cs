@@ -1,7 +1,7 @@
-﻿using ArtAuctionHub.API.Extensions;
-using ArtAuctionHub.Application.DTOs.Bid;
+﻿using ArtAuctionHub.Application.DTOs.Bid;
 using ArtAuctionHub.Application.Interfaces;
 using ArtAuctionHub.Shared.Constants;
+using ArtAuctionHub.Shared.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

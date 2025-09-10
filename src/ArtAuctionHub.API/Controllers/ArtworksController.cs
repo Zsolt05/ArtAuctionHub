@@ -1,7 +1,7 @@
-﻿using ArtAuctionHub.API.Extensions;
-using ArtAuctionHub.Application.DTOs.ArtWork;
+﻿using ArtAuctionHub.Application.DTOs.ArtWork;
 using ArtAuctionHub.Application.Interfaces;
 using ArtAuctionHub.Shared.Constants;
+using ArtAuctionHub.Shared.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -27,7 +27,7 @@ namespace ArtAuctionHub.API.Controllers
         // POST /api/artworks
         public async Task<IActionResult> CreateArtworkAsync([FromForm] ArtworkDto dto, [FromForm] IFormFile imageFile)
         {
-            var createdArtwork = await artworkService.CreateArtworkAsync(dto, imageFile);
+            var createdArtwork = await artworkService.CreateArtworkAsync(dto, imageFile, User);
             return CreatedAtAction(nameof(GetAll), new { id = createdArtwork.Id }, createdArtwork);
         }
 
@@ -39,7 +39,7 @@ namespace ArtAuctionHub.API.Controllers
         // PUT /api/artworks/{id}
         public async Task<IActionResult> UpdateArtworkAsync(int id, [FromBody] ArtworkDto dto)
         {
-            var updatedArtwork = await artworkService.UpdateArtworkAsync(id, dto);
+            var updatedArtwork = await artworkService.UpdateArtworkAsync(id, dto, User);
             return Ok(updatedArtwork);
         }
 
@@ -51,7 +51,7 @@ namespace ArtAuctionHub.API.Controllers
         // DELETE /api/artworks/{id}
         public async Task<IActionResult> DeleteArtworkAsync(int id)
         {
-            await artworkService.DeleteArtworkAsync(id);
+            await artworkService.DeleteArtworkAsync(id, User);
             return NoContent();
         }
 
