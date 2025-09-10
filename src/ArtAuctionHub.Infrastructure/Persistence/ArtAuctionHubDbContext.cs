@@ -1,5 +1,7 @@
 ﻿using ArtAuctionHub.Domain.Entities;
 using ArtAuctionHub.Shared.Constants;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace ArtAuctionHub.Infrastructure.Persistence
@@ -8,20 +10,12 @@ namespace ArtAuctionHub.Infrastructure.Persistence
     /// The ArtAuctionHubDbContext class manages all database access for the application.
     /// It defines DbSet properties that represent tables in the SQL Server database.
     /// </summary>
-    public class ArtAuctionHubDbContext(DbContextOptions<ArtAuctionHubDbContext> options) : DbContext(options)
+    public class ArtAuctionHubDbContext(DbContextOptions<ArtAuctionHubDbContext> options)
+        : IdentityDbContext<User, Role, int,
+                            IdentityUserClaim<int>, UserRole,
+                            IdentityUserLogin<int>, IdentityRoleClaim<int>,
+                            IdentityUserToken<int>>(options)
     {
-        /// <summary>
-        /// Represents the Users table in the database.
-        /// </summary>
-        public DbSet<User> Users { get; set; }
-        /// <summary>
-        /// Represents the Roles table in the database.
-        /// </summary>
-        public DbSet<Role> Roles { get; set; }
-        /// <summary>
-        /// Represents the UserRoles table in the database, which is a join table for many-to-many relationships between Users and Roles.
-        /// </summary>
-        public DbSet<UserRole> UserRoles { get; set; }
         /// <summary>
         /// Represents the Artworks table in the database.
         /// </summary>
@@ -47,14 +41,24 @@ namespace ArtAuctionHub.Infrastructure.Persistence
         /// Configures entity mappings and relationships.
         /// This method is called automatically by EF Core.
         /// </summary>
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        protected override void OnModelCreating(ModelBuilder builder)
         {
-            base.OnModelCreating(modelBuilder);
+            base.OnModelCreating(builder);
+
+            // Map identity tables to custom table names
+            builder.Entity<User>().ToTable("Users");
+            builder.Entity<Role>().ToTable("Roles");
+            builder.Entity<UserRole>().ToTable("UserRoles");
+            builder.Entity<IdentityUserClaim<int>>().ToTable("UserClaims");
+            builder.Entity<IdentityUserLogin<int>>().ToTable("UserLogins");
+            builder.Entity<IdentityRoleClaim<int>>().ToTable("RoleClaims");
+            builder.Entity<IdentityUserToken<int>>().ToTable("UserTokens");
+
             // Configure User entity
-            modelBuilder.Entity<User>(entity =>
+            builder.Entity<User>(entity =>
             {
                 entity.HasKey(u => u.Id);
-                entity.Property(u => u.Username).IsRequired().HasMaxLength(50);
+                entity.Property(u => u.UserName).IsRequired().HasMaxLength(50);
                 entity.Property(u => u.Email).IsRequired().HasMaxLength(100);
                 entity.HasMany(u => u.Roles)
                       .WithOne(ur => ur.User)
@@ -63,7 +67,7 @@ namespace ArtAuctionHub.Infrastructure.Persistence
             });
 
             // Configure Role entity
-            modelBuilder.Entity<Role>(entity =>
+            builder.Entity<Role>(entity =>
             {
                 entity.HasKey(r => r.Id);
                 entity.Property(r => r.Name).IsRequired().HasMaxLength(50);
@@ -74,7 +78,7 @@ namespace ArtAuctionHub.Infrastructure.Persistence
             });
 
             // Configure UserRole entity
-            modelBuilder.Entity<UserRole>(entity =>
+            builder.Entity<UserRole>(entity =>
             {
                 entity.HasKey(ur => new { ur.UserId, ur.RoleId });
                 entity.HasOne(ur => ur.User)
@@ -88,7 +92,7 @@ namespace ArtAuctionHub.Infrastructure.Persistence
             });
 
             // Configure Artwork entity
-            modelBuilder.Entity<Artwork>(entity =>
+            builder.Entity<Artwork>(entity =>
             {
                 entity.HasKey(a => a.Id);
                 entity.Property(a => a.Title).IsRequired().HasMaxLength(100);
@@ -104,7 +108,7 @@ namespace ArtAuctionHub.Infrastructure.Persistence
             });
 
             // Configure Auction entity
-            modelBuilder.Entity<Auction>(entity =>
+            builder.Entity<Auction>(entity =>
             {
                 entity.HasKey(a => a.Id);
                 entity.Property(a => a.StartDate).IsRequired();
@@ -121,7 +125,7 @@ namespace ArtAuctionHub.Infrastructure.Persistence
             });
 
             // Configure Bid entity
-            modelBuilder.Entity<Bid>(entity =>
+            builder.Entity<Bid>(entity =>
             {
                 entity.HasKey(b => b.Id);
                 entity.Property(b => b.Amount).HasPrecision(18, 2).IsRequired();
@@ -137,7 +141,7 @@ namespace ArtAuctionHub.Infrastructure.Persistence
             });
 
             // Configure Category entity
-            modelBuilder.Entity<Category>(entity =>
+            builder.Entity<Category>(entity =>
             {
                 entity.HasKey(c => c.Id);
                 entity.Property(c => c.Name).IsRequired().HasMaxLength(50);
@@ -148,7 +152,7 @@ namespace ArtAuctionHub.Infrastructure.Persistence
             });
 
             // Configure UserFavorites entity
-            modelBuilder.Entity<UserFavorites>(entity =>
+            builder.Entity<UserFavorites>(entity =>
             {
                 entity.HasKey(uf => new { uf.UserId, uf.ArtworkId });
                 entity.HasOne(uf => uf.User)
@@ -162,38 +166,49 @@ namespace ArtAuctionHub.Infrastructure.Persistence
             });
 
             // Seed initial data for Roles
-            modelBuilder.Entity<Role>().HasData(
-                new Role { Id = 1, Name = RoleNames.Buyer },
-                new Role { Id = 2, Name = RoleNames.Artist }
+            builder.Entity<Role>().HasData(
+                new Role { Id = 1, Name = RoleNames.Buyer, NormalizedName = RoleNames.Buyer.ToUpper() },
+                new Role { Id = 2, Name = RoleNames.Artist, NormalizedName = RoleNames.Artist.ToUpper() }
             );
 
             // Seed initial data for Categories
-            modelBuilder.Entity<Category>().HasData(
+            builder.Entity<Category>().HasData(
                 new Category { Id = 1, Name = "Painting" },
                 new Category { Id = 2, Name = "Photography" },
                 new Category { Id = 3, Name = "Digital Art" }
             );
 
             // Seed initial data for Users
-            modelBuilder.Entity<User>().HasData(
+            builder.Entity<User>().HasData(
                 new User
                 {
                     Id = 1,
-                    Username = RoleNames.Buyer,
-                    Email = $"{RoleNames.Buyer}@test.com",
-                    PasswordHash = "$2a$12$UmdjxzKaFe4DF.74Y7P/8ug8bie1bSTFC4UHtC7ZW/g3vxFLyc1OS" // Example hash for "Buyer123!"
+                    UserName = RoleNames.Buyer,
+                    Email = RoleNames.Buyer + "@test.com",
+                    NormalizedEmail = (RoleNames.Buyer + "@test.com").ToUpper(),
+                    PasswordHash = "AQAAAAIAAYagAAAAEKVY84EDLu9Rdv6SuRUOWr20KTY8CBrZvdKOCRUBc7FI3pPGcFneUYf/TvVv2GeT0g==", // Example hash for "Buyer123!"
+                    NormalizedUserName = RoleNames.Buyer.ToUpper(),
+                    EmailConfirmed = true,
+                    ConcurrencyStamp = null,
+                    SecurityStamp = null
+
                 },
                 new User
                 {
                     Id = 2,
-                    Username = RoleNames.Artist,
-                    Email = $"{RoleNames.Artist}@test.com",
-                    PasswordHash = "$2a$12$8ZeSHcGMpER.zMQXp7BFWuMC7AMDIyFGIKCETTFYUFveb5Qz0Jeqq" // Example hash for "Artist123!"
+                    UserName = RoleNames.Artist,
+                    Email = RoleNames.Artist + "@test.com",
+                    NormalizedEmail = (RoleNames.Artist + "@test.com").ToUpper(),
+                    PasswordHash = "AQAAAAIAAYagAAAAEFMIke77qIxGeBw2N2D15Ab/KXWFfiF+ygvFY96hVYkw//cO0oCwKviR1GAl0Q9CTw==", // Example hash for "Artist123!"
+                    NormalizedUserName = RoleNames.Artist.ToUpper(),
+                    EmailConfirmed = true,
+                    ConcurrencyStamp = null,
+                    SecurityStamp = null
                 }
             );
 
             // Seed initial data for UserRoles
-            modelBuilder.Entity<UserRole>().HasData(
+            builder.Entity<UserRole>().HasData(
                 new UserRole { UserId = 1, RoleId = 1 }, // Buyer
                 new UserRole { UserId = 2, RoleId = 2 } // Artist
             );

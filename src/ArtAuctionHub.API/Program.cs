@@ -3,9 +3,11 @@ using ArtAuctionHub.API.Filters;
 using ArtAuctionHub.API.Middlewares;
 using ArtAuctionHub.Application.Interfaces;
 using ArtAuctionHub.Application.Services;
+using ArtAuctionHub.Domain.Entities;
 using ArtAuctionHub.Infrastructure.Extensions;
 using ArtAuctionHub.Infrastructure.Persistence;
 using ArtAuctionHub.Infrastructure.Services;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 // Creates a WebApplicationBuilder, which is used to configure
@@ -33,6 +35,21 @@ builder.Services.Configure<ApiBehaviorOptions>(o =>
 {
     o.SuppressModelStateInvalidFilter = true;
 });
+
+// Configures ASP.NET Core Identity for user and role management.
+// This sets up the necessary services to handle user authentication,
+// password hashing, role management, and more.
+builder.Services
+    .AddIdentityCore<User>(options =>
+    {
+        options.Password.RequireDigit = true;
+        options.Password.RequireNonAlphanumeric = false;
+        options.Password.RequireUppercase = false;
+        options.Password.RequiredLength = 6;
+    })
+    .AddRoles<Role>()
+    .AddEntityFrameworkStores<ArtAuctionHubDbContext>()
+    .AddDefaultTokenProviders();
 
 // Registers application services in the dependency injection container.
 // These services can be injected into controllers or other services.

@@ -7,14 +7,14 @@ Content-Type: application/json
 {
   "userName": "testuser",
   "email": "test@example.com",
-  "password": "123456",
+  "password": "Test123",
   "birthDate": "2000-01-01T00:00:00Z",
   "role": "Buyer"
 }
 
 ###
 
-### Login user (copy JWT from response and set it to {{jwt_token}} in the environment)
+### Login Buyer user (copy JWT from response and set it to {{jwt_token}} in the environment)
 POST {{host}}/api/auth/login
 Content-Type: application/json
 
@@ -25,6 +25,20 @@ Content-Type: application/json
 
 ###
 
+### Login Artist user (copy JWT from response and set it to {{jwt_token}} in the environment)
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "Artist@test.com",
+  "password": "Artist123!"
+}
+
+###
+
 ### Get current user (JWT needed from login)
 GET {{host}}/api/auth/me
 Authorization: Bearer {{jwt_token}}
+Content-Type: application/json
+
+###

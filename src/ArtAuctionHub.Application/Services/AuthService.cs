@@ -3,96 +3,78 @@ using ArtAuctionHub.Application.DTOs.Auth;
 using ArtAuctionHub.Application.Interfaces;
 using ArtAuctionHub.Domain.Entities;
 using ArtAuctionHub.Domain.Interfaces;
-using ArtAuctionHub.Domain.Interfaces.Repositories;
-using ArtAuctionHub.Shared.Constants;
+using Microsoft.AspNetCore.Identity;
 
 namespace ArtAuctionHub.Application.Services
 {
     /// <summary>
-    /// Provides user registration and authentication operations using repository and unit-of-work abstractions.
-    /// <para>
-    /// This implementation is persistence-agnostic and depends only on domain contracts,
-    /// making it easy to unit test and swap infrastructure concerns.
-    /// </para>
-    /// <remarks>
-    /// Password hashing is delegated to <see cref="PasswordHasherService"/>; token creation is
-    /// intentionally omitted and replaced by a mocked string.
-    /// </remarks>
+    /// Authentication & registration service built on ASP.NET Core Identity.
     /// </summary>
-    /// <param name="users">User repository.</param>
-    /// <param name="roles">Role repository.</param>
-    /// <param name="userRoles">User-role link repository.</param>
-    /// <param name="uow">Unit of work for coordinating transactions and persistence.</param>
-    /// <param name="jwt">JWT token factory.</param>
     public sealed class AuthService(
-        IUserRepository users,
-        IRoleRepository roles,
-        IUserRoleRepository userRoles,
-        IUnitOfWork uow,
+        UserManager<User> userManager,
+        RoleManager<Role> roleManager,
         IJwtTokenFactory jwt) : IAuthService
     {
         /// <summary>
-        /// Registers a new user and assigns the requested role atomically.
+        /// Registers a new user with the specified role using ASP.NET Identity.
         /// </summary>
-        /// <param name="dto">Incoming registration data.</param>
-        /// <exception cref="InvalidOperationException">
-        /// Thrown when e-mail or username already exists, or the role does not exist.
-        /// </exception>
         public async Task RegisterAsync(RegisterDto dto)
         {
-            if (await users.ExistsByEmailAsync(dto.Email).ConfigureAwait(false))
+            // check if email already exists
+            var existingUser = await userManager.FindByEmailAsync(dto.Email);
+            if (existingUser != null)
                 throw new InvalidOperationException("This email is already registered.");
 
-            if (await users.ExistsByUsernameAsync(dto.UserName).ConfigureAwait(false))
+            // check if username already exists
+            var existingByName = await userManager.FindByNameAsync(dto.UserName);
+            if (existingByName != null)
                 throw new InvalidOperationException("This username is already taken.");
 
-            var role = await roles.GetByNameAsync(dto.Role).ConfigureAwait(false)
-                       ?? throw new InvalidOperationException($"Unknown role: {dto.Role}");
+            // check if role exists
+            var roleExists = await roleManager.RoleExistsAsync(dto.Role);
+            if (!roleExists)
+                throw new InvalidOperationException($"Unknown role: {dto.Role}");
 
             var user = new User
             {
-                Username = dto.UserName,
+                UserName = dto.UserName,
                 Email = dto.Email,
-                PasswordHash = PasswordHasherService.HashPassword(dto.Password)
+                EmailConfirmed = true
             };
 
-            await uow.ExecuteInTransactionAsync(async () =>
+            var result = await userManager.CreateAsync(user, dto.Password);
+            if (!result.Succeeded)
             {
-                await users.AddAsync(user).ConfigureAwait(false);
-                await uow.SaveChangesAsync().ConfigureAwait(false); // ensure Id
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                throw new InvalidOperationException($"User creation failed: {errors}");
+            }
 
-                // Avoid duplicate assignment if a unique constraint is not present yet.
-                if (!await userRoles.HasRoleAsync(user.Id, role.Id).ConfigureAwait(false))
-                {
-                    await userRoles.AddAsync(new UserRole { UserId = user.Id, RoleId = role.Id })
-                                   .ConfigureAwait(false);
-                }
-
-                await uow.SaveChangesAsync().ConfigureAwait(false);
-            }).ConfigureAwait(false);
+            await userManager.AddToRoleAsync(user, dto.Role);
         }
 
         /// <summary>
-        /// Validates user credentials and returns a mocked token.
+        /// Validates user credentials and issues JWT token.
         /// </summary>
-        /// <param name="dto">Login data.</param>
-        /// <returns>Mocked token string representing an authenticated session.</returns>
-        /// <exception cref="UnauthorizedAccessException">Thrown when credentials are invalid.</exception>
         public async Task<AuthResultDto> LoginAsync(LoginDto dto)
         {
-            var user = await users.GetByEmailAsync(dto.Email).ConfigureAwait(false);
-
-            if (user is null || !PasswordHasherService.VerifyPassword(dto.Password, user.PasswordHash))
+            var user = await userManager.FindByEmailAsync(dto.Email);
+            if (user == null)
                 throw new UnauthorizedAccessException("Invalid email or password.");
 
-            var roleNames = await userRoles.GetRoleNamesForUserAsync(user.Id);
+            var valid = await userManager.CheckPasswordAsync(user, dto.Password);
+            if (!valid)
+                throw new UnauthorizedAccessException("Invalid email or password.");
 
-            (string token, DateTime expires) = jwt.CreateToken(user.Id, user.Username, user.Email, roleNames);
+            var roles = await userManager.GetRolesAsync(user);
+
+            (string token, DateTime expires) = jwt.CreateToken(user.Id, user.UserName!, user.Email!, roles);
 
             return new AuthResultDto(token, expires);
         }
 
-        /// <inheritdoc/>
+        /// <summary>
+        /// Reads ClaimsPrincipal into a DTO of the current user.
+        /// </summary>
         public CurrentUserDto GetCurrentUser(ClaimsPrincipal user)
         {
             if (user?.Identity is not { IsAuthenticated: true })

@@ -20,7 +20,7 @@ namespace ArtAuctionHub.Infrastructure.Persistence.Repositories
 
         /// <inheritdoc/>
         public Task<bool> ExistsByUsernameAsync(string username, CancellationToken ct = default)
-            => _set.AsNoTracking().AnyAsync(u => u.Username == username, ct);
+            => _set.AsNoTracking().AnyAsync(u => u.UserName == username, ct);
 
         /// <inheritdoc/>
         public Task<User?> GetByEmailAsync(string email, CancellationToken ct = default)

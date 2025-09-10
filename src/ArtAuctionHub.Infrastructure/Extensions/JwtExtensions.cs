@@ -35,12 +35,12 @@ namespace ArtAuctionHub.Infrastructure.Extensions
         {
             var key = config["Jwt:Key"] ?? throw new InvalidOperationException("Jwt:Key missing");
 
-            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme);
             services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
                 options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            }).AddJwtBearer(opts =>
+            })
+            .AddJwtBearer(opts =>
             {
                 opts.TokenValidationParameters = new TokenValidationParameters
                 {
@@ -51,7 +51,7 @@ namespace ArtAuctionHub.Infrastructure.Extensions
                     ValidIssuer = config["Jwt:Issuer"],
                     ValidAudience = config["Jwt:Audience"],
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),
-                    ClockSkew = TimeSpan.FromMinutes(5)
+                    ClockSkew = TimeSpan.Zero
                 };
                 opts.Events = new JwtBearerEvents
                 {

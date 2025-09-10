@@ -6,6 +6,10 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.7" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<Folder Include="Enums" />
 		<Folder Include="Events" />
 		<Folder Include="ValueObjects" />
