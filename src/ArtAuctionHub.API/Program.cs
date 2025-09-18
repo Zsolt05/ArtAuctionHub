@@ -61,6 +61,9 @@ builder.Services
 // frequently requested resources.
 builder.Services.AddResponseCaching();
 
+// Adds in-memory caching services to the application.
+builder.Services.AddMemoryCache();
+
 // Registers application services in the dependency injection container.
 // These services can be injected into controllers or other services.
 // There are several services registered here, each responsible for a specific part of the application logic.
@@ -84,6 +87,8 @@ builder.Services.AddScoped<IArtworkService, ArtworkService>();
 builder.Services.AddScoped<IBidService, BidService>();
 builder.Services.AddScoped<IFavoriteService, FavoriteService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
+
+builder.Services.AddScoped<ICacheService, MemoryCacheService>();
 
 builder.Services.AddScoped<PasswordHasherService>();
 

@@ -15,6 +15,7 @@ namespace ArtAuctionHub.API.Controllers
     /// </remarks>
     /// <param name="artworkService">An instance of IArtworkService to handle artwork operations. Registered in the Dependency Injection (DI) container.</param>
     /// <param name="logger">The logger instance for logging artwork actions.</param>
+    /// <param name="cacheService">The cache service instance for caching artwork data.</param>
     [ApiController] // Indicates that this controller responds to web API requests.
     [Route("api/artworks")] // Base route for all artwork-related endpoints. (/api/artworks)
     [Authorize]
@@ -22,16 +23,19 @@ namespace ArtAuctionHub.API.Controllers
     {
         private readonly IArtworkService _artworkService;
         private readonly ILogger<ArtworksController> _logger;
+        private readonly ICacheService _cacheService;
 
         /// <summary>
         /// Constructor for ArtworksController.
         /// </summary>
         /// <param name="artworkService">Injected artwork service.</param>
         /// <param name="logger">Logger for artwork actions.</param>
-        public ArtworksController(IArtworkService artworkService, ILogger<ArtworksController> logger)
+        /// <param name="cacheService">Injected cache service.</param>
+        public ArtworksController(IArtworkService artworkService, ILogger<ArtworksController> logger, ICacheService cacheService)
         {
             _artworkService = artworkService;
             _logger = logger;
+            _cacheService = cacheService;
         }
 
         /// <summary>
@@ -48,6 +52,9 @@ namespace ArtAuctionHub.API.Controllers
             _logger.LogInformation("User {User} is creating a new artwork: {Title}", User.GetUserName(), dto.Title);
             var createdArtwork = await _artworkService.CreateArtworkAsync(dto, imageFile, User);
             _logger.LogInformation("Artwork created successfully: {ArtworkId} by user {User}", createdArtwork.Id, User.GetUserName());
+
+            _cacheService.Remove(CacheKeyNames.AllArtworks); // Invalidate the cache for all artworks
+
             return CreatedAtAction(nameof(GetAll), new { id = createdArtwork.Id }, createdArtwork);
         }
 
@@ -62,6 +69,9 @@ namespace ArtAuctionHub.API.Controllers
             _logger.LogInformation("User {User} is updating artwork {ArtworkId}", User.GetUserName(), id);
             var updatedArtwork = await _artworkService.UpdateArtworkAsync(id, dto, User);
             _logger.LogInformation("Artwork {ArtworkId} updated successfully by user {User}", id, User.GetUserName());
+
+            _cacheService.Remove(CacheKeyNames.AllArtworks); // Invalidate the cache for all artworks
+
             return Ok(updatedArtwork);
         }
 
@@ -76,6 +86,9 @@ namespace ArtAuctionHub.API.Controllers
             _logger.LogInformation("User {User} is deleting artwork {ArtworkId}", User.GetUserName(), id);
             await _artworkService.DeleteArtworkAsync(id, User);
             _logger.LogInformation("Artwork {ArtworkId} deleted successfully by user {User}", id, User.GetUserName());
+
+            _cacheService.Remove(CacheKeyNames.AllArtworks); // Invalidate the cache for all artworks
+
             return NoContent();
         }
 
@@ -83,12 +96,17 @@ namespace ArtAuctionHub.API.Controllers
         /// Retrieves all artworks from the database.
         /// </summary>
         [HttpGet]
-        [ResponseCache(Duration = 60, Location = ResponseCacheLocation.Any, NoStore = false)] // Caches the response for 60 seconds to improve performance.
         // GET /api/artworks
         public async Task<IActionResult> GetAll()
         {
-            _logger.LogInformation("Retrieving all artworks");
-            var artworks = await _artworkService.GetAllArtworksAsync();
+            _logger.LogInformation("Retrieving all artworks (with caching)");
+
+            var artworks = await _cacheService.GetOrCreateAsync(
+                cacheKey: CacheKeyNames.AllArtworks,
+                factory: () => _artworkService.GetAllArtworksAsync(),
+                absoluteExpireTime: TimeSpan.FromSeconds(60)
+            );
+
             _logger.LogInformation("Returned {Count} artworks", artworks?.Count() ?? 0);
             return Ok(artworks);
         }
