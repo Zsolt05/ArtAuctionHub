@@ -83,6 +83,7 @@ namespace ArtAuctionHub.API.Controllers
         /// Retrieves all artworks from the database.
         /// </summary>
         [HttpGet]
+        [ResponseCache(Duration = 60, Location = ResponseCacheLocation.Any, NoStore = false)] // Caches the response for 60 seconds to improve performance.
         // GET /api/artworks
         public async Task<IActionResult> GetAll()
         {
@@ -97,6 +98,7 @@ namespace ArtAuctionHub.API.Controllers
         /// </summary>
         [HttpGet("my")]
         [Authorize(Roles = RoleNames.Artist)]
+        [ResponseCache(Duration = 30, Location = ResponseCacheLocation.Any, NoStore = false)] // Caches the response for 30 seconds to improve performance.
         // GET /api/artworks/my
         public async Task<IActionResult> GetMyArtworksAsync()
         {

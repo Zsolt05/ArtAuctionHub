@@ -71,6 +71,7 @@ namespace ArtAuctionHub.API.Controllers
         /// </summary>
         /// <returns>A 200 OK response with the list of favorite artworks.</returns>
         [HttpGet] // Matches GET /api/favorites.
+        [ResponseCache(Duration = 60, Location = ResponseCacheLocation.Any, NoStore = false)] // Caches the response for 60 seconds to improve performance.
         public async Task<IActionResult> GetFavorites()
         {
             int userId = User.GetUserId();

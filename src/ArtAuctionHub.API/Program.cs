@@ -56,6 +56,11 @@ builder.Services
     .AddEntityFrameworkStores<ArtAuctionHubDbContext>()
     .AddDefaultTokenProviders();
 
+// Adds Response Caching middleware to the application.
+// This allows responses to be cached, improving performance for
+// frequently requested resources.
+builder.Services.AddResponseCaching();
+
 // Registers application services in the dependency injection container.
 // These services can be injected into controllers or other services.
 // There are several services registered here, each responsible for a specific part of the application logic.
@@ -100,6 +105,9 @@ app.UseExceptionHandling();
 // This improves security by ensuring encrypted communication.
 // Example: http://localhost:5000 → https://localhost:7000
 app.UseHttpsRedirection();
+
+// Adds response caching middleware to the request pipeline.
+app.UseResponseCaching();
 
 // Adds authentication middleware to the request pipeline.
 app.UseAuthentication();

@@ -36,6 +36,7 @@ namespace ArtAuctionHub.API.Controllers
         /// </summary>
         /// <returns>A 200 OK response with a list of categories.</returns>
         [HttpGet] // Matches GET /api/categories.
+        [ResponseCache(Duration = 300, Location = ResponseCacheLocation.Any, NoStore = false)] // Caches the response for 5 minutes to improve performance.
         public async Task<IActionResult> GetCategories()
         {
             _logger.LogInformation("Retrieving all artwork categories");
