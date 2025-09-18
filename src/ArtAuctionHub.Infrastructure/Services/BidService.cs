@@ -1,10 +1,9 @@
-﻿// ArtAuctionHub.Infrastructure/Services/BidService.cs
-using ArtAuctionHub.Application.DTOs.Bid;
+﻿using ArtAuctionHub.Application.DTOs.Bid;
 using ArtAuctionHub.Application.Interfaces;
 using ArtAuctionHub.Domain.Entities;
 using ArtAuctionHub.Domain.Interfaces;
 using ArtAuctionHub.Domain.Interfaces.Repositories;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace ArtAuctionHub.Infrastructure.Services
 {
@@ -19,6 +18,7 @@ namespace ArtAuctionHub.Infrastructure.Services
         private readonly IRepository<User> _users;
         private readonly IRepository<Auction> _auctions;
         private readonly IUnitOfWork _uow;
+        private readonly ILogger<BidService> _logger;
 
         /// <summary>
         /// Creates a new instance of <see cref="BidService"/>.
@@ -27,16 +27,19 @@ namespace ArtAuctionHub.Infrastructure.Services
         /// <param name="users">Generic repository for <see cref="User"/> checks.</param>
         /// <param name="auctions">Generic repository for <see cref="Auction"/> checks.</param>
         /// <param name="uow">Unit of work coordinating the current persistence context.</param>
+        /// <param name="logger">Logger for bid actions.</param>
         public BidService(
             IBidRepository bids,
             IRepository<User> users,
             IRepository<Auction> auctions,
-            IUnitOfWork uow)
+            IUnitOfWork uow,
+            ILogger<BidService> logger)
         {
             _bids = bids;
             _users = users;
             _auctions = auctions;
             _uow = uow;
+            _logger = logger;
         }
 
         /// <summary>
@@ -47,13 +50,16 @@ namespace ArtAuctionHub.Infrastructure.Services
         /// <exception cref="ArgumentException">Thrown when the user does not exist.</exception>
         public async Task<List<BidDto>> GetBidsForUserAsync(int userId)
         {
-            // Validate user existence
+            _logger.LogInformation("Retrieving bids for user {UserId}", userId);
             if (!await _users.AnyAsync(u => u.Id == userId))
+            {
+                _logger.LogWarning("User with ID {UserId} does not exist.", userId);
                 throw new ArgumentException($"User with ID {userId} does not exist.");
+            }
 
             var bids = await _bids.ListByUserAsync(userId);
+            _logger.LogInformation("Returned {Count} bids for user {UserId}", bids.Count, userId);
 
-            // simple projection to DTO
             return bids.Select(b => new BidDto
             {
                 Amount = b.Amount,
@@ -71,22 +77,29 @@ namespace ArtAuctionHub.Infrastructure.Services
         /// when the auction already ended, or when the bid amount is not high enough.</exception>
         public async Task PlaceBidAsync(BidDto dto, int userId)
         {
-            // Validate user & auction existence
+            _logger.LogInformation("User {UserId} is placing a bid of {Amount} on auction {AuctionId}", userId, dto.Amount, dto.AuctionId);
             if (!await _users.AnyAsync(u => u.Id == userId))
+            {
+                _logger.LogWarning("User with ID {UserId} does not exist.", userId);
                 throw new ArgumentException($"User with ID {userId} does not exist.");
+            }
 
             var auction = await _auctions.FirstOrDefaultAsync(a => a.Id == dto.AuctionId)
                           ?? throw new ArgumentException($"Auction with ID {dto.AuctionId} does not exist.");
 
             if (auction.EndDate < DateTime.UtcNow)
+            {
+                _logger.LogWarning("Auction with ID {AuctionId} has already ended.", dto.AuctionId);
                 throw new ArgumentException($"Auction with ID {dto.AuctionId} has already ended.");
+            }
 
-            // Business rule: must exceed max bid
             var maxBid = await _bids.GetMaxAmountForAuctionAsync(dto.AuctionId);
             if (dto.Amount <= maxBid)
+            {
+                _logger.LogWarning("Bid amount {Amount} is not greater than current max bid {MaxBid} for auction {AuctionId}", dto.Amount, maxBid, dto.AuctionId);
                 throw new ArgumentException($"Bid amount must be greater than the current maximum bid of {maxBid}.");
+            }
 
-            // Create and persist new bid
             var bid = new Bid
             {
                 Amount = dto.Amount,
@@ -96,7 +109,8 @@ namespace ArtAuctionHub.Infrastructure.Services
             };
 
             await _bids.AddAsync(bid);
-            await _uow.SaveChangesAsync(); // single UoW commit
+            await _uow.SaveChangesAsync();
+            _logger.LogInformation("Bid of {Amount} placed successfully by user {UserId} on auction {AuctionId}", dto.Amount, userId, dto.AuctionId);
         }
     }
 }

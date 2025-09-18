@@ -10,12 +10,30 @@ namespace ArtAuctionHub.API.Controllers
     /// <summary>
     /// The FavoritesController manages a user's favorite artworks.
     /// </summary>
-    /// <param name="_favoriteService">An instance of IFavoriteService to handle favorite operations. Registered in the Dependency Injection (DI) container.</param>
+    /// <remarks>
+    /// Constructor for FavoritesController.
+    /// </remarks>
+    /// <param name="favoriteService">An instance of IFavoriteService to handle favorite operations. Registered in the Dependency Injection (DI) container.</param>
+    /// <param name="logger">The logger instance for logging favorite actions.</param>
     [ApiController] // Indicates that this controller responds to web API requests.
     [Route("api/favorites")] // Base route for favorites-related endpoints. (/api/favorites)
     [Authorize(Roles = RoleNames.Buyer)] // Only users with the "Buyer" role can access these endpoints.
-    public class FavoritesController(IFavoriteService _favoriteService) : ControllerBase
+    public class FavoritesController : ControllerBase
     {
+        private readonly IFavoriteService _favoriteService;
+        private readonly ILogger<FavoritesController> _logger;
+
+        /// <summary>
+        /// Constructor for FavoritesController.
+        /// </summary>
+        /// <param name="favoriteService">Injected favorite service.</param>
+        /// <param name="logger">Logger for favorite actions.</param>
+        public FavoritesController(IFavoriteService favoriteService, ILogger<FavoritesController> logger)
+        {
+            _favoriteService = favoriteService;
+            _logger = logger;
+        }
+
         /// <summary>
         /// Adds an artwork to the current user's favorites.
         /// </summary>
@@ -26,7 +44,9 @@ namespace ArtAuctionHub.API.Controllers
         public async Task<IActionResult> AddFavorite(int artworkId)
         {
             int userId = User.GetUserId();
+            _logger.LogInformation("User {UserId} is adding artwork {ArtworkId} to favorites", userId, artworkId);
             await _favoriteService.AddFavoriteAsync(artworkId, userId);
+            _logger.LogInformation("Artwork {ArtworkId} added to favorites for user {UserId}", artworkId, userId);
             return Ok(new { Message = $"Artwork {artworkId} added to favorites." });
         }
 
@@ -40,7 +60,9 @@ namespace ArtAuctionHub.API.Controllers
         public async Task<IActionResult> RemoveFavorite(int artworkId)
         {
             int userId = User.GetUserId();
+            _logger.LogInformation("User {UserId} is removing artwork {ArtworkId} from favorites", userId, artworkId);
             await _favoriteService.RemoveFavoriteAsync(artworkId, userId);
+            _logger.LogInformation("Artwork {ArtworkId} removed from favorites for user {UserId}", artworkId, userId);
             return Ok(new { Message = $"Artwork {artworkId} removed from favorites." });
         }
 
@@ -52,6 +74,7 @@ namespace ArtAuctionHub.API.Controllers
         public async Task<IActionResult> GetFavorites()
         {
             int userId = User.GetUserId();
+            _logger.LogInformation("Retrieving favorites for user {UserId}", userId);
             var favorites = await _favoriteService.GetFavoritesAsync(userId);
             var favoritesDto = favorites.Select(f => new ArtworkDto
             {
@@ -62,6 +85,7 @@ namespace ArtAuctionHub.API.Controllers
                 CodeName = f.CodeName,
                 IsAdultOnly = f.IsAdultOnly
             }).ToList();
+            _logger.LogInformation("Returned {Count} favorites for user {UserId}", favoritesDto.Count, userId);
             return Ok(favoritesDto); // Returns 200 OK with the list of favorite artworks.
         }
     }

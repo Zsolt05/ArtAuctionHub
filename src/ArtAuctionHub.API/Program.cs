@@ -15,6 +15,11 @@ using Microsoft.AspNetCore.Mvc;
 // Think of it as the setup phase of your app.
 var builder = WebApplication.CreateBuilder(args);
 
+// Configures logging for the application.
+// Clears any existing logging providers and adds console logging.
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+
 // Adds JWT authentication services to the application.
 builder.Services.AddJwtAuth(builder.Configuration);
 
@@ -83,10 +88,14 @@ builder.Services.AddExceptionHandling();
 // and define routes, middleware, and more.
 var app = builder.Build();
 
+// Adds custom request logging middleware to the request pipeline.
+app.UseRequestLoggingMiddleware();
+
 // Adds custom exception handling middleware to the request pipeline.
 // This middleware will catch unhandled exceptions and convert them
 // into standardized HTTP error responses.
 app.UseExceptionHandling();
+
 // Adds middleware that redirects HTTP requests to HTTPS.
 // This improves security by ensuring encrypted communication.
 // Example: http://localhost:5000 → https://localhost:7000

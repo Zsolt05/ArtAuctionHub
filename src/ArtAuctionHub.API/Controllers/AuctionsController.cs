@@ -13,13 +13,27 @@ namespace ArtAuctionHub.API.Controllers
     /// All operations are asynchronous and rely on the IAuctionService.
     /// </summary>
     /// <remarks>
-    /// Constructor that injects IAuctionService.
+    /// Constructor that injects IAuctionService and ILogger.
     /// </remarks>
     [ApiController]
     [Route("api/auctions")]
     [Authorize]
-    public class AuctionsController(IAuctionService auctionService) : ControllerBase
+    public class AuctionsController : ControllerBase
     {
+        private readonly IAuctionService _auctionService;
+        private readonly ILogger<AuctionsController> _logger;
+
+        /// <summary>
+        /// Constructor for AuctionsController.
+        /// </summary>
+        /// <param name="auctionService">Injected auction service.</param>
+        /// <param name="logger">Logger for auction actions.</param>
+        public AuctionsController(IAuctionService auctionService, ILogger<AuctionsController> logger)
+        {
+            _auctionService = auctionService;
+            _logger = logger;
+        }
+
         /// <summary>
         /// Starts a new auction.
         /// </summary>
@@ -30,7 +44,9 @@ namespace ArtAuctionHub.API.Controllers
         public async Task<IActionResult> StartAuction([FromBody] AuctionDto dto)
         {
             int userId = User.GetUserId();
-            var createdAuction = await auctionService.CreateAuctionAsync(userId,dto);
+            _logger.LogInformation("User {UserId} is starting a new auction for artwork {ArtworkId}", userId, dto.ArtworkId);
+            var createdAuction = await _auctionService.CreateAuctionAsync(userId, dto);
+            _logger.LogInformation("Auction created for artwork {ArtworkId} by user {UserId}", dto.ArtworkId, userId);
             return CreatedAtAction(nameof(GetAuctionDetails), new { id = dto.ArtworkId }, createdAuction);
         }
 
@@ -45,7 +61,9 @@ namespace ArtAuctionHub.API.Controllers
         public async Task<IActionResult> EditAuction(int auctionId, [FromBody] AuctionDto dto)
         {
             int userId = User.GetUserId();
-            var updatedAuction = await auctionService.UpdateAuctionAsync(userId, auctionId, dto);
+            _logger.LogInformation("User {UserId} is editing auction {AuctionId}", userId, auctionId);
+            var updatedAuction = await _auctionService.UpdateAuctionAsync(userId, auctionId, dto);
+            _logger.LogInformation("Auction {AuctionId} updated by user {UserId}", auctionId, userId);
             return Ok(updatedAuction);
         }
 
@@ -59,7 +77,9 @@ namespace ArtAuctionHub.API.Controllers
         public async Task<IActionResult> DeleteAuction(int auctionId)
         {
             int userId = User.GetUserId();
-            await auctionService.DeleteAuctionAsync(userId, auctionId);
+            _logger.LogInformation("User {UserId} is deleting auction {AuctionId}", userId, auctionId);
+            await _auctionService.DeleteAuctionAsync(userId, auctionId);
+            _logger.LogInformation("Auction {AuctionId} deleted by user {UserId}", auctionId, userId);
             return NoContent();
         }
 
@@ -70,7 +90,8 @@ namespace ArtAuctionHub.API.Controllers
         [HttpGet("active")]
         public async Task<IActionResult> GetActiveAuctions()
         {
-            var activeAuctions = await auctionService.GetActiveAuctionsAsync();
+            _logger.LogInformation("Retrieving all active auctions");
+            var activeAuctions = await _auctionService.GetActiveAuctionsAsync();
             return Ok(activeAuctions);
         }
 
@@ -84,7 +105,8 @@ namespace ArtAuctionHub.API.Controllers
         public async Task<IActionResult> GetMyAuctions()
         {
             int userId = User.GetUserId();
-            var myAuctions = await auctionService.GetUserAuctionsAsync(userId);
+            _logger.LogInformation("Retrieving auctions for user {UserId}", userId);
+            var myAuctions = await _auctionService.GetUserAuctionsAsync(userId);
             return Ok(myAuctions);
         }
 
@@ -96,9 +118,11 @@ namespace ArtAuctionHub.API.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetAuctionDetails(int id)
         {
-            var auctionDetails = await auctionService.GetAuctionByIdAsync(id);
+            _logger.LogInformation("Retrieving details for auction {AuctionId}", id);
+            var auctionDetails = await _auctionService.GetAuctionByIdAsync(id);
             if (auctionDetails == null)
             {
+                _logger.LogWarning("Auction with ID {AuctionId} not found", id);
                 return NotFound(new { message = $"Auction with ID {id} not found." });
             }
             return Ok(auctionDetails);

@@ -1,6 +1,7 @@
 ﻿using ArtAuctionHub.Application.Interfaces;
 using ArtAuctionHub.Domain.Interfaces.Repositories;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace ArtAuctionHub.Infrastructure.Services
 {
@@ -9,11 +10,26 @@ namespace ArtAuctionHub.Infrastructure.Services
     /// This keeps the service decoupled from EF Core and the actual persistence.
     /// </summary>
     /// <remarks>
-    /// Creates the service with a category repository dependency.
+    /// Creates the service with a category repository dependency and logger.
     /// </remarks>
     /// <param name="categories">The repository providing access to categories.</param>
-    public class CategoryService(ICategoryRepository categories) : ICategoryService
+    /// <param name="logger">The logger instance for logging category actions.</param>
+    public class CategoryService : ICategoryService
     {
+        private readonly ICategoryRepository _categories;
+        private readonly ILogger<CategoryService> _logger;
+
+        /// <summary>
+        /// Constructor for CategoryService.
+        /// </summary>
+        /// <param name="categories">Injected category repository.</param>
+        /// <param name="logger">Logger for category actions.</param>
+        public CategoryService(ICategoryRepository categories, ILogger<CategoryService> logger)
+        {
+            _categories = categories;
+            _logger = logger;
+        }
+
         /// <summary>
         /// Gets the list of category names in alphabetical order.
         /// Uses projection on the repository's queryable to avoid materializing
@@ -22,16 +38,15 @@ namespace ArtAuctionHub.Infrastructure.Services
         /// <returns>A sequence of category names.</returns>
         public async Task<IEnumerable<string>> GetCategoriesAsync()
         {
-            // Option A: use the repo's queryable for lightweight projection
-            return await categories
+            _logger.LogInformation("Retrieving all artwork categories");
+            var result = await _categories
                 .AsQueryable()
                 .OrderBy(c => c.Name)
                 .Select(c => c.Name)
                 .ToListAsync();
 
-            // Option B: or use the convenience method and project in-memory:
-            // var all = await _categories.ListAllOrderedByNameAsync();
-            // return all.Select(c => c.Name);
+            _logger.LogInformation("Returned {Count} categories", result.Count);
+            return result;
         }
     }
 }

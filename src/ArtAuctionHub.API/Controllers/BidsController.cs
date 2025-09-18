@@ -10,12 +10,30 @@ namespace ArtAuctionHub.API.Controllers
     /// <summary>
     /// The BidsController handles placing and retrieving bids on auctions.
     /// </summary>
-    /// <param name="_bidService">An instance of IBidService to handle bid operations. Registered in the Dependency Injection (DI) container.</param>
+    /// <remarks>
+    /// Constructor for BidsController.
+    /// </remarks>
+    /// <param name="bidService">An instance of IBidService to handle bid operations. Registered in the Dependency Injection (DI) container.</param>
+    /// <param name="logger">The logger instance for logging bid actions.</param>
     [ApiController] // Indicates that this controller responds to web API requests.
     [Route("api/bids")] // Base route for all bid-related endpoints. (/api/bids/place)
     [Authorize]
-    public class BidsController(IBidService _bidService) : ControllerBase
+    public class BidsController : ControllerBase
     {
+        private readonly IBidService _bidService;
+        private readonly ILogger<BidsController> _logger;
+
+        /// <summary>
+        /// Constructor for BidsController.
+        /// </summary>
+        /// <param name="bidService">Injected bid service.</param>
+        /// <param name="logger">Logger for bid actions.</param>
+        public BidsController(IBidService bidService, ILogger<BidsController> logger)
+        {
+            _bidService = bidService;
+            _logger = logger;
+        }
+
         /// <summary>
         /// Places a bid on an auction.
         /// </summary>
@@ -26,7 +44,9 @@ namespace ArtAuctionHub.API.Controllers
         public async Task<IActionResult> PlaceBid([FromBody] BidDto dto)
         {
             int userId = User.GetUserId();
+            _logger.LogInformation("User {UserId} is placing a bid on auction {AuctionId}", userId, dto.AuctionId);
             await _bidService.PlaceBidAsync(dto, userId);
+            _logger.LogInformation("Bid placed successfully by user {UserId} on auction {AuctionId}", userId, dto.AuctionId);
             return Ok(new { Message = "Bid placed successfully." });
         }
 
@@ -40,6 +60,7 @@ namespace ArtAuctionHub.API.Controllers
         public async Task<IActionResult> GetMyBids()
         {
             int userId = User.GetUserId();
+            _logger.LogInformation("Retrieving bids for user {UserId}", userId);
             var myBids = await _bidService.GetBidsForUserAsync(userId);
             return Ok(myBids); // Returns 200 OK with the user's bids.
         }

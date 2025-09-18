@@ -53,22 +53,22 @@ namespace ArtAuctionHub.Infrastructure.Extensions
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),
                     ClockSkew = TimeSpan.Zero
                 };
-                opts.Events = new JwtBearerEvents
-                {
-                    OnAuthenticationFailed = ctx =>
-                    {
-                        Console.WriteLine($"JWT failed: {ctx.Exception.GetType().Name} - {ctx.Exception.Message}");
-                        if (ctx.Exception is SecurityTokenInvalidIssuerException)
-                            Console.WriteLine($"Expected issuer: {opts.TokenValidationParameters.ValidIssuer}");
-                        if (ctx.Exception is SecurityTokenInvalidAudienceException)
-                            Console.WriteLine($"Expected audience: {opts.TokenValidationParameters.ValidAudience}");
-                        if (ctx.Exception is SecurityTokenInvalidSignatureException)
-                            Console.WriteLine("Signature invalid (key mismatch?).");
-                        if (ctx.Exception is SecurityTokenExpiredException ste)
-                            Console.WriteLine($"Expired at: {ste.Expires:o}");
-                        return Task.CompletedTask;
-                    }
-                };
+                //opts.Events = new JwtBearerEvents
+                //{
+                //    OnAuthenticationFailed = ctx =>
+                //    {
+                //        Console.WriteLine($"JWT failed: {ctx.Exception.GetType().Name} - {ctx.Exception.Message}");
+                //        if (ctx.Exception is SecurityTokenInvalidIssuerException)
+                //            Console.WriteLine($"Expected issuer: {opts.TokenValidationParameters.ValidIssuer}");
+                //        if (ctx.Exception is SecurityTokenInvalidAudienceException)
+                //            Console.WriteLine($"Expected audience: {opts.TokenValidationParameters.ValidAudience}");
+                //        if (ctx.Exception is SecurityTokenInvalidSignatureException)
+                //            Console.WriteLine("Signature invalid (key mismatch?).");
+                //        if (ctx.Exception is SecurityTokenExpiredException ste)
+                //            Console.WriteLine($"Expired at: {ste.Expires:o}");
+                //        return Task.CompletedTask;
+                //    }
+                //};
             });
 
             services.AddScoped<IJwtTokenFactory, JwtTokenFactory>();

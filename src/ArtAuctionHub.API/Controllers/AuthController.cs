@@ -13,10 +13,25 @@ namespace ArtAuctionHub.API.Controllers
     /// Constructor for AuthController.
     /// </remarks>
     /// <param name="authService">An implementation of IAuthService to handle authentication operations. Registered in the Dependency Injection (DI) container.</param>
+    /// <param name="logger">The logger instance for logging authentication actions.</param>
     [ApiController] // Indicates that this controller responds to web API requests.
     [Route("api/auth")] // Base route for authentication-related endpoints. (/api/auth)
-    public class AuthController(IAuthService authService) : ControllerBase
+    public class AuthController : ControllerBase
     {
+        private readonly IAuthService _authService;
+        private readonly ILogger<AuthController> _logger;
+
+        /// <summary>
+        /// Constructor for AuthController.
+        /// </summary>
+        /// <param name="authService">An implementation of IAuthService to handle authentication operations. Registered in the Dependency Injection (DI) container.</param>
+        /// <param name="logger">The logger instance for logging authentication actions.</param>
+        public AuthController(IAuthService authService, ILogger<AuthController> logger)
+        {
+            _authService = authService;
+            _logger = logger;
+        }
+
         /// <summary>
         /// Registers a new user based on the data provided in the request body.
         /// </summary>
@@ -31,7 +46,9 @@ namespace ArtAuctionHub.API.Controllers
         [Route("register")] // Matches POST /api/auth/register.
         public async Task<IActionResult> Register([FromBody] RegisterDto dto)
         {
-            await authService.RegisterAsync(dto);
+            _logger.LogInformation("Register attempt for user: {Email}", dto.Email);
+            await _authService.RegisterAsync(dto);
+            _logger.LogInformation("User registered successfully: {Email}", dto.Email);
             return Ok(new { Message = "User registered successfully." });
         }
 
@@ -49,7 +66,9 @@ namespace ArtAuctionHub.API.Controllers
         [Route("login")] // Matches POST /api/auth/login.
         public async Task<IActionResult> Login([FromBody] LoginDto dto)
         {
-            var token = await authService.LoginAsync(dto);
+            _logger.LogInformation("Login attempt for user: {Email}", dto.Email);
+            var token = await _authService.LoginAsync(dto);
+            _logger.LogInformation("User logged in successfully: {Email}", dto.Email);
             return Ok(new { Token = token });
         }
 
@@ -64,7 +83,8 @@ namespace ArtAuctionHub.API.Controllers
         [Authorize]
         public IActionResult Me()
         {
-            var userInfo = authService.GetCurrentUser(User);
+            var userInfo = _authService.GetCurrentUser(User);
+            _logger.LogInformation("Current user info requested: {User}", userInfo?.Username ?? "Unknown");
             return userInfo == null ? throw new UnauthorizedAccessException("User is not authenticated.") : (IActionResult)Ok(userInfo);
         }
     }

@@ -7,6 +7,7 @@ using ArtAuctionHub.Domain.Interfaces.Repositories;
 using ArtAuctionHub.Shared.Extensions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace ArtAuctionHub.Infrastructure.Services
 {
@@ -23,6 +24,7 @@ namespace ArtAuctionHub.Infrastructure.Services
         private readonly IArtworkRepository _artworks;
         private readonly IUnitOfWork _uow;
         private readonly IHostEnvironment _environment;
+        private readonly ILogger<ArtworkService> _logger;
 
         /// <summary>
         /// Creates the service with the required dependencies.
@@ -30,11 +32,13 @@ namespace ArtAuctionHub.Infrastructure.Services
         /// <param name="artworks">Artwork repository used for data access.</param>
         /// <param name="uow">Unit of work used to commit changes atomically.</param>
         /// <param name="environment">Host environment used to resolve the upload path.</param>
-        public ArtworkService(IArtworkRepository artworks, IUnitOfWork uow, IHostEnvironment environment)
+        /// <param name="logger">Logger for artwork actions.</param>
+        public ArtworkService(IArtworkRepository artworks, IUnitOfWork uow, IHostEnvironment environment, ILogger<ArtworkService> logger)
         {
             _artworks = artworks;
             _uow = uow;
             _environment = environment;
+            _logger = logger;
         }
 
         /// <summary>
@@ -47,6 +51,7 @@ namespace ArtAuctionHub.Infrastructure.Services
         /// <exception cref="ArgumentException">Thrown when the file is missing or has an invalid extension.</exception>
         public async Task<ReadArtworkDto> CreateArtworkAsync(ArtworkDto dto, IFormFile imageFile, ClaimsPrincipal user)
         {
+            _logger.LogInformation("User {User} is creating a new artwork: {Title}", user.GetUserName(), dto.Title);
             if (imageFile is null || imageFile.Length == 0)
                 throw new ArgumentException("Image file is required.", nameof(imageFile));
 
@@ -82,6 +87,8 @@ namespace ArtAuctionHub.Infrastructure.Services
             await _artworks.AddAsync(artwork);
             await _uow.SaveChangesAsync();
 
+            _logger.LogInformation("Artwork created successfully: {ArtworkId} by user {User}", artwork.Id, user.GetUserName());
+
             return new ReadArtworkDto
             {
                 Id = artwork.Id,
@@ -106,11 +113,13 @@ namespace ArtAuctionHub.Infrastructure.Services
         /// <exception cref="KeyNotFoundException">Thrown if the artwork does not exist.</exception>
         public async Task<ReadArtworkDto> UpdateArtworkAsync(int id, ArtworkDto dto, ClaimsPrincipal user)
         {
+            _logger.LogInformation("User {User} is updating artwork {ArtworkId}", user.GetUserName(), id);
             var artwork = await _artworks.GetByIdAsync(id)
                 ?? throw new KeyNotFoundException("Artwork not found.");
 
             if (artwork.ArtistId != user.GetUserId())
             {
+                _logger.LogWarning("User {User} is not authorized to update artwork {ArtworkId}", user.GetUserName(), id);
                 throw new UnauthorizedAccessException("You are not authorized to update this artwork.");
             }
 
@@ -121,6 +130,8 @@ namespace ArtAuctionHub.Infrastructure.Services
 
             _artworks.Update(artwork);
             await _uow.SaveChangesAsync();
+
+            _logger.LogInformation("Artwork {ArtworkId} updated successfully by user {User}", id, user.GetUserName());
 
             return new ReadArtworkDto
             {
@@ -143,11 +154,13 @@ namespace ArtAuctionHub.Infrastructure.Services
         /// <param name="id">Artwork identifier.</param>
         public async Task DeleteArtworkAsync(int id, ClaimsPrincipal user)
         {
+            _logger.LogInformation("User {User} is deleting artwork {ArtworkId}", user.GetUserName(), id);
             var artwork = await _artworks.GetByIdAsync(id);
             if (artwork is null) return;
 
             if (artwork.ArtistId != user.GetUserId())
             {
+                _logger.LogWarning("User {User} is not authorized to delete artwork {ArtworkId}", user.GetUserName(), id);
                 throw new UnauthorizedAccessException("You are not authorized to delete this artwork.");
             }
 
@@ -158,6 +171,7 @@ namespace ArtAuctionHub.Infrastructure.Services
 
             _artworks.Remove(artwork);
             await _uow.SaveChangesAsync();
+            _logger.LogInformation("Artwork {ArtworkId} deleted successfully by user {User}", id, user.GetUserName());
         }
 
         /// <summary>
@@ -165,7 +179,9 @@ namespace ArtAuctionHub.Infrastructure.Services
         /// </summary>
         public async Task<IEnumerable<ReadArtworkDto>> GetAllArtworksAsync()
         {
+            _logger.LogInformation("Retrieving all artworks");
             var entities = await _artworks.GetAllAsync();
+            _logger.LogInformation("Returned {Count} artworks", entities.Count);
             return entities.Select(a => new ReadArtworkDto
             {
                 Id = a.Id,
@@ -186,7 +202,9 @@ namespace ArtAuctionHub.Infrastructure.Services
         /// <param name="userId">The current user's id (to be wired from auth later).</param>
         public async Task<IEnumerable<ReadArtworkDto>> GetMyArtworksAsync(int userId)
         {
+            _logger.LogInformation("Retrieving artworks for user {UserId}", userId);
             var entities = await _artworks.GetByArtistIdAsync(userId);
+            _logger.LogInformation("Returned {Count} artworks for user {UserId}", entities.Count, userId);
             return entities.Select(a => new ReadArtworkDto
             {
                 Id = a.Id,

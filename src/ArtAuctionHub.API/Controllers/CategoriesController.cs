@@ -11,11 +11,25 @@ namespace ArtAuctionHub.API.Controllers
     /// Constructor for the CategoriesController.
     /// </remarks>
     /// <param name="categoryService">An instance of ICategoryService to handle category operations. Registered in the Dependency Injection (DI) container.</param>
+    /// <param name="logger">The logger instance for logging category actions.</param>
     [ApiController] // Indicates that this controller responds to web API requests.
     [Route("api/categories")] // Base route for category-related endpoints. (/api/categories)
     [Authorize]
-    public class CategoriesController(ICategoryService categoryService) : ControllerBase
+    public class CategoriesController : ControllerBase
     {
+        private readonly ICategoryService _categoryService;
+        private readonly ILogger<CategoriesController> _logger;
+
+        /// <summary>
+        /// Constructor for CategoriesController.
+        /// </summary>
+        /// <param name="categoryService">Injected category service.</param>
+        /// <param name="logger">Logger for category actions.</param>
+        public CategoriesController(ICategoryService categoryService, ILogger<CategoriesController> logger)
+        {
+            _categoryService = categoryService;
+            _logger = logger;
+        }
 
         /// <summary>
         /// Retrieves all available artwork categories.
@@ -24,7 +38,8 @@ namespace ArtAuctionHub.API.Controllers
         [HttpGet] // Matches GET /api/categories.
         public async Task<IActionResult> GetCategories()
         {
-            var categories = await categoryService.GetCategoriesAsync();
+            _logger.LogInformation("Retrieving all artwork categories");
+            var categories = await _categoryService.GetCategoriesAsync();
             return Ok(categories); // Returns 200 OK with the list of categories.
         }
     }
