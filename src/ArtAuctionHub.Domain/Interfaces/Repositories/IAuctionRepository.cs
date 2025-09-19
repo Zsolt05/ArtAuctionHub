@@ -29,5 +29,23 @@ namespace ArtAuctionHub.Domain.Interfaces.Repositories
         /// <param name="ct">Cancellation token.</param>
         /// <returns>A list of <see cref="Auction"/> entities.</returns>
         Task<List<Auction>> ListForCurrentUserAsync(int userId, CancellationToken ct = default);
+
+        /// <summary>
+        /// Determines if the auction with the given ID is currently active at <paramref name="utcNow"/>.
+        /// </summary>
+        /// <param name="auctionId">Auction identifier.</param>
+        /// <param name="utcNow">A The timestamp used to determine activity. Expected in UTC.</param>
+        /// <param name="ct">Cancellation token.</param>
+        /// <returns><see langword="true"/> if the auction is active; otherwise, <see langword="false"/>.</returns>
+        Task<bool> IsActiveAsync(int auctionId, DateTime utcNow, CancellationToken ct = default);
+
+        /// <summary>
+        /// Retrieves an active auction by its ID if it is currently active at <paramref name="utcNow"/>.
+        /// </summary>
+        /// <param name="auctionId">Auction identifier.</param>
+        /// <param name="utcNow">A The timestamp used to determine activity. Expected in UTC.</param>
+        /// <param name="ct">Cancellation token.</param>
+        /// <returns>The <see cref="Auction"/> if found and active</returns>
+        Task<Auction> GetActiveAuctionByIdAsync(int auctionId, DateTime utcNow, CancellationToken ct = default);
     }
 }

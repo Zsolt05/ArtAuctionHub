@@ -1,5 +1,6 @@
 ﻿using ArtAuctionHub.Domain.Entities;
 using ArtAuctionHub.Domain.Interfaces.Repositories;
+using ArtAuctionHub.Shared.Exceptions;
 using Microsoft.EntityFrameworkCore;
 
 namespace ArtAuctionHub.Infrastructure.Persistence.Repositories
@@ -34,6 +35,44 @@ namespace ArtAuctionHub.Infrastructure.Persistence.Repositories
                 .MaxAsync(b => (decimal?)b.Amount, ct);
 
             return max ?? 0m;
+        }
+
+        /// <inheritdoc />
+        public async Task<Bid> GetHighestBidForAuctionAsync(int auctionId, CancellationToken ct = default)
+        {
+            // Get the highest bid for the auction
+            var highestBid = await _set
+                .Where(b => b.AuctionId == auctionId)
+                .OrderByDescending(b => b.Amount)
+                .ThenByDescending(b => b.BidDate)
+                .Select(b => new Bid
+                {
+                    Id = b.Id,
+                    Amount = b.Amount,
+                    BidDate = b.BidDate,
+                    UserId = b.UserId,
+                    AuctionId = b.AuctionId
+                })
+                .FirstOrDefaultAsync(ct);
+
+            if (highestBid != null)
+                return highestBid;
+
+            // Only fetch the necessary fields for the auction
+            var auctionData = await _db.Auctions
+                .Where(a => a.Id == auctionId)
+                .Select(a => new { a.Id, a.StartingPrice, a.StartDate, a.Artwork.ArtistId })
+                .SingleOrDefaultAsync(ct)
+                ?? throw new NotFoundException($"Auction with id {auctionId} not found.");
+
+            // No bids exist, return a starting bid
+            return new Bid
+            {
+                Amount = auctionData.StartingPrice,
+                AuctionId = auctionData.Id,
+                BidDate = auctionData.StartDate,
+                UserId = auctionData.ArtistId
+            };
         }
     }
 }

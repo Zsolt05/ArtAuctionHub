@@ -1,10 +1,11 @@
-﻿using System.Text;
-using ArtAuctionHub.Domain.Interfaces;
+﻿using ArtAuctionHub.Domain.Interfaces;
 using ArtAuctionHub.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 namespace ArtAuctionHub.Infrastructure.Extensions
 {
@@ -52,6 +53,19 @@ namespace ArtAuctionHub.Infrastructure.Extensions
                     ValidAudience = config["Jwt:Audience"],
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),
                     ClockSkew = TimeSpan.Zero
+                };
+                opts.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        var accessToken = context.Request.Query["access_token"];
+                        var path = context.HttpContext.Request.Path;
+                        if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/ws/auction-bids"))
+                        {
+                            context.Token = accessToken;
+                        }
+                        return Task.CompletedTask;
+                    }
                 };
                 //opts.Events = new JwtBearerEvents
                 //{

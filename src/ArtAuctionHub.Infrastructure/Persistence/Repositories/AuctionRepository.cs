@@ -1,5 +1,6 @@
 ﻿using ArtAuctionHub.Domain.Entities;
 using ArtAuctionHub.Domain.Interfaces.Repositories;
+using ArtAuctionHub.Shared.Exceptions;
 using Microsoft.EntityFrameworkCore;
 
 namespace ArtAuctionHub.Infrastructure.Persistence.Repositories
@@ -20,13 +21,35 @@ namespace ArtAuctionHub.Infrastructure.Persistence.Repositories
         public AuctionRepository(ArtAuctionHubDbContext db) : base(db) { }
 
         /// <inheritdoc />
-        public Task<List<Auction>> ListActiveAsync(DateTime utcNow, CancellationToken ct = default)
-            => _set
+        public async Task<List<Auction>> ListActiveAsync(DateTime utcNow, CancellationToken ct = default)
+            => await _set
                 .Where(a => a.StartDate <= utcNow && a.EndDate >= utcNow)
                 .ToListAsync(ct);
 
         /// <inheritdoc />
-        public Task<List<Auction>> ListForCurrentUserAsync(int userId, CancellationToken ct = default)
-            => _set.Where(a => a.Artwork.ArtistId == userId).ToListAsync(ct);
+        public async Task<List<Auction>> ListForCurrentUserAsync(int userId, CancellationToken ct = default)
+            => await _set.Where(a => a.Artwork.ArtistId == userId).ToListAsync(ct);
+
+        /// <inheritdoc />
+        public async Task<bool> IsActiveAsync(int auctionId, DateTime utcNow, CancellationToken ct = default)
+            => await _set.AnyAsync(a => a.Id == auctionId
+                                    && a.StartDate <= utcNow
+                                    && a.EndDate >= utcNow, ct);
+
+        /// <inheritdoc />
+        public async Task<Auction> GetActiveAuctionByIdAsync(int auctionId, DateTime utcNow, CancellationToken ct = default)
+        {
+            var auction = await _set
+                .Include(a => a.Artwork)
+                .ThenInclude(art => art.Category)
+                .Include(a => a.Bids)
+                .ThenInclude(b => b.User)
+                .FirstOrDefaultAsync(a => a.Id == auctionId
+                                       && a.StartDate <= utcNow
+                                       && a.EndDate >= utcNow, ct)
+               ?? throw new NotFoundException($"Active auction not found with ID {auctionId}");
+
+            return auction;
+        }
     }
 }

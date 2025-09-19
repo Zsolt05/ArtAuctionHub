@@ -98,13 +98,16 @@ builder.Services.AddExceptionHandling();
 // and define routes, middleware, and more.
 var app = builder.Build();
 
-// Adds custom request logging middleware to the request pipeline.
-app.UseRequestLoggingMiddleware();
-
 // Adds custom exception handling middleware to the request pipeline.
 // This middleware will catch unhandled exceptions and convert them
 // into standardized HTTP error responses.
 app.UseExceptionHandling();
+
+// Adds WebSocket support to the application.
+app.UseWebSockets();
+
+// Adds custom request logging middleware to the request pipeline.
+app.UseRequestLoggingMiddleware();
 
 // Adds middleware that redirects HTTP requests to HTTPS.
 // This improves security by ensuring encrypted communication.
@@ -118,6 +121,13 @@ app.UseResponseCaching();
 app.UseAuthentication();
 // Adds authorization middleware to the request pipeline.
 app.UseAuthorization();
+
+// Adds AuctionBid WebSocket middleware to the request pipeline.
+// This middleware handles WebSocket connections for real-time auction bidding.
+// You can test WebSocket connections using tools like "Quick WebSocket Client" Chrome extension:
+// https://chromewebstore.google.com/detail/quick-websocket-client-wi/enmpedlkjjjnhoehlkkghdjiloebecpn
+// Example WebSocket URL: wss://localhost:7000/ws/auction-bids?auctionId=4&access_token=eyJhbG..
+app.UseAuctionBidWebSocket();
 
 // Maps all controller endpoints to the request pipeline.
 // If we have controllers (e.g., AuthController), 

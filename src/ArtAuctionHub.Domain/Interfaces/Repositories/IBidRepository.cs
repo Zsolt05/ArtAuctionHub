@@ -28,5 +28,16 @@ namespace ArtAuctionHub.Domain.Interfaces.Repositories
         /// <param name="ct">Cancellation token.</param>
         /// <returns>The maximum amount found or <c>0</c> when no bids exist.</returns>
         Task<decimal> GetMaxAmountForAuctionAsync(int auctionId, CancellationToken ct = default);
+
+        /// <summary>
+        /// Retrieves the highest bid for a specific auction.
+        /// </summary>
+        /// <remarks>
+        /// If no bids exist for the auction, returns with a starting bid
+        /// </remarks>
+        /// <param name="auctionId">Auction identifier.</param>
+        /// <param name="ct">Cancellation token.</param>
+        /// <returns>The highest <see cref="Bid"/> for the specified auction</returns>>
+        Task<Bid> GetHighestBidForAuctionAsync(int auctionId, CancellationToken ct = default);
     }
 }

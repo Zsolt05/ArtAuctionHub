@@ -1,4 +1,6 @@
 ﻿using ArtAuctionHub.Application.DTOs.Bid;
+using ArtAuctionHub.Domain.Entities;
+using ArtAuctionHub.Shared.Exceptions;
 
 namespace ArtAuctionHub.Application.Interfaces
 {
@@ -20,5 +22,16 @@ namespace ArtAuctionHub.Application.Interfaces
         /// </summary>
         /// <returns>A collection of BidDto representing the user's bids.</returns>
         Task<List<BidDto>> GetBidsForUserAsync(int userId);
+
+        /// <summary>
+        /// Retrieves the highest bid for a specific auction.
+        /// </summary>
+        /// <remarks>
+        /// If no bids have been placed, returns the auction's starting price as a Bid with Amount set to the starting price.
+        /// </remarks>
+        /// <param name="auctionId">Auction identifier.</param>
+        /// <exception cref="NotFoundException">Thrown when the auction does not exist.</exception>"
+        /// <returns>The highest Bid for the specified auction.</returns>
+        Task<Bid> GetHighestBidForAuctionAsync(int auctionId);
     }
 }

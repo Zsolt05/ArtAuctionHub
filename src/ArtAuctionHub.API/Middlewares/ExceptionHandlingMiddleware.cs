@@ -105,6 +105,12 @@ namespace ArtAuctionHub.API.Middlewares
         /// </remarks>
         private async Task HandleExceptionAsync(HttpContext httpContext, Exception exception)
         {
+            if (httpContext.Response.HasStarted)
+            {
+                _logger.LogWarning("The response has already started, cannot write error response.");
+                return; // Do not attempt to modify response
+            }
+
             var (status, title, code, errors) = MapException(exception);
 
             // Correlated logging (trace id surfaces both in logs and response)
@@ -135,6 +141,7 @@ namespace ArtAuctionHub.API.Middlewares
                 Errors = errors
             };
 
+            httpContext.Response.Clear();
             httpContext.Response.StatusCode = status;
             httpContext.Response.ContentType = "application/problem+json";
 

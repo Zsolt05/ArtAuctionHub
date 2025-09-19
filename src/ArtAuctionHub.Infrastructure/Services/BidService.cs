@@ -3,6 +3,7 @@ using ArtAuctionHub.Application.Interfaces;
 using ArtAuctionHub.Domain.Entities;
 using ArtAuctionHub.Domain.Interfaces;
 using ArtAuctionHub.Domain.Interfaces.Repositories;
+using ArtAuctionHub.Shared.Exceptions;
 using Microsoft.Extensions.Logging;
 
 namespace ArtAuctionHub.Infrastructure.Services
@@ -16,7 +17,7 @@ namespace ArtAuctionHub.Infrastructure.Services
     {
         private readonly IBidRepository _bids;
         private readonly IRepository<User> _users;
-        private readonly IRepository<Auction> _auctions;
+        private readonly IAuctionRepository _auctions;
         private readonly IUnitOfWork _uow;
         private readonly ILogger<BidService> _logger;
 
@@ -25,13 +26,13 @@ namespace ArtAuctionHub.Infrastructure.Services
         /// </summary>
         /// <param name="bids">Repository for <see cref="Bid"/> aggregates.</param>
         /// <param name="users">Generic repository for <see cref="User"/> checks.</param>
-        /// <param name="auctions">Generic repository for <see cref="Auction"/> checks.</param>
+        /// <param name="auctions">Repository for <see cref="Auction"/> aggregates.</param>
         /// <param name="uow">Unit of work coordinating the current persistence context.</param>
         /// <param name="logger">Logger for bid actions.</param>
         public BidService(
             IBidRepository bids,
             IRepository<User> users,
-            IRepository<Auction> auctions,
+            IAuctionRepository auctions,
             IUnitOfWork uow,
             ILogger<BidService> logger)
         {
@@ -67,6 +68,25 @@ namespace ArtAuctionHub.Infrastructure.Services
             }).ToList();
         }
 
+        /// <inheritdoc/>
+        public async Task<Bid> GetHighestBidForAuctionAsync(int auctionId)
+        {
+            if (!await _auctions.AnyAsync(a => a.Id == auctionId))
+            {
+                _logger.LogWarning("Auction with ID {AuctionId} does not exist.", auctionId);
+                throw new NotFoundException("Auction not found with ID " + auctionId);
+            }
+
+            if (!await _auctions.IsActiveAsync(auctionId, DateTime.UtcNow))
+            {
+                _logger.LogWarning("Auction with ID {AuctionId} is not active.", auctionId);
+                throw new NotFoundException($"Auction with ID {auctionId} is not active.");
+            }
+
+            _logger.LogInformation("Retrieving highest bid for auction {AuctionId}", auctionId);
+            return await _bids.GetHighestBidForAuctionAsync(auctionId);
+        }
+
         /// <summary>
         /// Places a bid for a given auction on behalf of the specified user.
         /// Performs validation against auction existence, end date and current max bid.
@@ -84,13 +104,10 @@ namespace ArtAuctionHub.Infrastructure.Services
                 throw new ArgumentException($"User with ID {userId} does not exist.");
             }
 
-            var auction = await _auctions.FirstOrDefaultAsync(a => a.Id == dto.AuctionId)
-                          ?? throw new ArgumentException($"Auction with ID {dto.AuctionId} does not exist.");
-
-            if (auction.EndDate < DateTime.UtcNow)
+            if (!await _auctions.IsActiveAsync(dto.AuctionId, DateTime.UtcNow))
             {
-                _logger.LogWarning("Auction with ID {AuctionId} has already ended.", dto.AuctionId);
-                throw new ArgumentException($"Auction with ID {dto.AuctionId} has already ended.");
+                _logger.LogWarning("Auction with ID {AuctionId} is not active.", dto.AuctionId);
+                throw new ArgumentException($"Auction with ID {dto.AuctionId} is not active or does not exist.");
             }
 
             var maxBid = await _bids.GetMaxAmountForAuctionAsync(dto.AuctionId);
