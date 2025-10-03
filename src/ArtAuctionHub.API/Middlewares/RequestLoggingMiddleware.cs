@@ -41,20 +41,4 @@ namespace ArtAuctionHub.API.Middlewares
                 stopwatch.ElapsedMilliseconds);
         }
     }
-
-    /// <summary>
-    /// Extension methods for adding the <see cref="RequestLoggingMiddleware"/> to the application pipeline.
-    /// </summary>
-    public static class RequestLoggingMiddlewareExtensions
-    {
-        /// <summary>
-        /// Adds the <see cref="RequestLoggingMiddleware"/> to the application's request pipeline.
-        /// </summary>
-        /// <param name="builder">The application builder.</param>
-        /// <returns>The application builder.</returns>
-        public static IApplicationBuilder UseRequestLoggingMiddleware(this IApplicationBuilder builder)
-        {
-            return builder.UseMiddleware<RequestLoggingMiddleware>();
-        }
-    }
 }

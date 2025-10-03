@@ -1,7 +1,6 @@
 ﻿using ArtAuctionHub.API.Extensions;
 using ArtAuctionHub.API.Filters;
 using ArtAuctionHub.API.Hubs;
-using ArtAuctionHub.API.Middlewares;
 using ArtAuctionHub.Application.Extensions;
 using ArtAuctionHub.Application.Interfaces;
 using ArtAuctionHub.Application.Services;
@@ -10,7 +9,6 @@ using ArtAuctionHub.Infrastructure.Extensions;
 using ArtAuctionHub.Infrastructure.Persistence;
 using ArtAuctionHub.Infrastructure.Services;
 using FluentValidation;
-using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi.Models;
@@ -180,6 +178,9 @@ app.UseResponseCaching();
 app.UseAuthentication();
 // Adds authorization middleware to the request pipeline.
 app.UseAuthorization();
+
+// Adds custom middleware to check for the existence of an auction
+app.AddAuctionExistenceMiddleware();
 
 // Adds AuctionBid WebSocket middleware to the request pipeline.
 // This middleware handles WebSocket connections for real-time auction bidding.

@@ -33,5 +33,23 @@ namespace ArtAuctionHub.API.Extensions
         {
             return app.UseMiddleware<ExceptionHandlingMiddleware>();
         }
+
+        /// <summary>
+        /// Adds the <see cref="RequestLoggingMiddleware"/> to the application's request pipeline.
+        /// </summary>
+        /// <param name="builder">The application builder.</param>
+        /// <returns>The application builder.</returns>
+        public static IApplicationBuilder UseRequestLoggingMiddleware(this IApplicationBuilder builder)
+        {
+            return builder.UseMiddleware<RequestLoggingMiddleware>();
+        }
+
+        /// <summary>
+        /// Adds the AuctionExistenceMiddleware to the application's request pipeline.
+        /// </summary>
+        public static IApplicationBuilder AddAuctionExistenceMiddleware(this IApplicationBuilder app)
+        {
+            return app.UseMiddleware<AuctionExistenceMiddleware>();
+        }
     }
 }
