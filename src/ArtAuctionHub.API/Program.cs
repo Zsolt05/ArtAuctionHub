@@ -1,5 +1,6 @@
 ﻿using ArtAuctionHub.API.Extensions;
 using ArtAuctionHub.API.Filters;
+using ArtAuctionHub.API.Hubs;
 using ArtAuctionHub.API.Middlewares;
 using ArtAuctionHub.Application.Interfaces;
 using ArtAuctionHub.Application.Services;
@@ -92,6 +93,13 @@ builder.Services.AddScoped<ICacheService, MemoryCacheService>();
 
 builder.Services.AddScoped<PasswordHasherService>();
 
+// Registers SignalR services for real-time web functionality.
+// SignalR allows server-side code to push content to connected clients instantly.
+// This is essential for features like live auction bidding.
+// SignalR uses hubs to manage connections and messaging.
+// The line below adds the necessary services to support SignalR in the application.
+builder.Services.AddSignalR();
+
 builder.Services.AddExceptionHandling();
 // Builds the WebApplication object from the builder.
 // This is the main object used to configure the app's request pipeline
@@ -128,6 +136,9 @@ app.UseAuthorization();
 // https://chromewebstore.google.com/detail/quick-websocket-client-wi/enmpedlkjjjnhoehlkkghdjiloebecpn
 // Example WebSocket URL: wss://localhost:7000/ws/auction-bids?auctionId=4&access_token=eyJhbG..
 app.UseAuctionBidWebSocket();
+
+// Maps the AuctionBidHub to the "/hubs/auction-bids" endpoint.
+app.MapHub<AuctionBidHub>("/hubs/auction-bids");
 
 // Maps all controller endpoints to the request pipeline.
 // If we have controllers (e.g., AuthController), 
