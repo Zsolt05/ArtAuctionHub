@@ -1,13 +1,12 @@
-﻿using System.Security.Claims;
-using ArtAuctionHub.Application.DTOs.ArtWork;
+﻿using ArtAuctionHub.Application.DTOs.ArtWork;
 using ArtAuctionHub.Application.Interfaces;
 using ArtAuctionHub.Domain.Entities;
 using ArtAuctionHub.Domain.Interfaces;
 using ArtAuctionHub.Domain.Interfaces.Repositories;
 using ArtAuctionHub.Shared.Extensions;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System.Security.Claims;
 
 namespace ArtAuctionHub.Infrastructure.Services
 {

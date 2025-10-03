@@ -2,12 +2,15 @@
 using ArtAuctionHub.API.Filters;
 using ArtAuctionHub.API.Hubs;
 using ArtAuctionHub.API.Middlewares;
+using ArtAuctionHub.Application.Extensions;
 using ArtAuctionHub.Application.Interfaces;
 using ArtAuctionHub.Application.Services;
 using ArtAuctionHub.Domain.Entities;
 using ArtAuctionHub.Infrastructure.Extensions;
 using ArtAuctionHub.Infrastructure.Persistence;
 using ArtAuctionHub.Infrastructure.Services;
+using FluentValidation;
+using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi.Models;
@@ -101,7 +104,11 @@ builder.Services.AddScoped<PasswordHasherService>();
 // The line below adds the necessary services to support SignalR in the application.
 builder.Services.AddSignalR();
 
+// Adds custom exception handling services to the application.
 builder.Services.AddExceptionHandling();
+
+// Adds custom validation services to the application.
+builder.Services.AddAppValidators();
 
 // Adds Swagger services for API documentation and testing.
 // Swagger generates interactive API docs that make it easy to explore and test endpoints.
