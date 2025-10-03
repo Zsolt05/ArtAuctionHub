@@ -49,23 +49,23 @@ namespace ArtAuctionHub.Infrastructure.Services
         /// <param name="imageFile">Uploaded file to be stored under the <c>uploads</c> folder.</param>
         /// <returns>A read model for the created artwork.</returns>
         /// <exception cref="ArgumentException">Thrown when the file is missing or has an invalid extension.</exception>
-        public async Task<ReadArtworkDto> CreateArtworkAsync(ArtworkDto dto, IFormFile imageFile, ClaimsPrincipal user)
+        public async Task<ReadArtworkDto> CreateArtworkAsync(CreateArtworkForm createArtworkForm, ClaimsPrincipal user)
         {
-            _logger.LogInformation("User {User} is creating a new artwork: {Title}", user.GetUserName(), dto.Title);
-            if (imageFile is null || imageFile.Length == 0)
-                throw new ArgumentException("Image file is required.", nameof(imageFile));
+            _logger.LogInformation("User {User} is creating a new artwork: {Title}", user.GetUserName(), createArtworkForm.Title);
+            if (createArtworkForm.ImageFile is null || createArtworkForm.ImageFile.Length == 0)
+                throw new ArgumentException("Image file is required.", nameof(createArtworkForm.ImageFile));
 
             var validExtensions = new[] { ".jpg", ".jpeg", ".png" };
-            var ext = Path.GetExtension(imageFile.FileName).ToLowerInvariant();
+            var ext = Path.GetExtension(createArtworkForm.ImageFile.FileName).ToLowerInvariant();
             if (!validExtensions.Contains(ext))
-                throw new ArgumentException("Invalid image format. Allowed: jpg, jpeg, png.", nameof(imageFile));
+                throw new ArgumentException("Invalid image format. Allowed: jpg, jpeg, png.", nameof(createArtworkForm.ImageFile));
 
             var artwork = new Artwork
             {
-                Title = dto.Title,
-                Description = dto.Description,
-                IsAdultOnly = dto.IsAdultOnly,
-                CategoryId = dto.CategoryId,
+                Title = createArtworkForm.Title,
+                Description = createArtworkForm.Description,
+                IsAdultOnly = createArtworkForm.IsAdultOnly,
+                CategoryId = createArtworkForm.CategoryId,
                 ArtistId = user.GetUserId(),
                 ArtistName = user.GetUserName()
             };
@@ -79,7 +79,7 @@ namespace ArtAuctionHub.Infrastructure.Services
             var filePath = Path.Combine(uploadPath, fileName);
             using (var stream = File.Create(filePath))
             {
-                await imageFile.CopyToAsync(stream);
+                await createArtworkForm.ImageFile.CopyToAsync(stream);
             }
             artwork.ImageUrl = $"/uploads/{fileName}";
 

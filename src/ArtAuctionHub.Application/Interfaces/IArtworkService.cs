@@ -14,7 +14,7 @@ namespace ArtAuctionHub.Application.Interfaces
         /// <summary>
         /// Creates a new artwork and saves the uploaded image to the file system.
         /// </summary>
-        Task<ReadArtworkDto> CreateArtworkAsync(ArtworkDto dto, IFormFile imageFile, ClaimsPrincipal user);
+        Task<ReadArtworkDto> CreateArtworkAsync(CreateArtworkForm createArtworkForm, ClaimsPrincipal user);
 
         /// <summary>
         /// Updates an artwork in the database (excluding image update).

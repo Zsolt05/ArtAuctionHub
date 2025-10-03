@@ -10,6 +10,7 @@ using ArtAuctionHub.Infrastructure.Persistence;
 using ArtAuctionHub.Infrastructure.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.OpenApi.Models;
 
 // Creates a WebApplicationBuilder, which is used to configure
 // services and middleware for the application.
@@ -101,6 +102,49 @@ builder.Services.AddScoped<PasswordHasherService>();
 builder.Services.AddSignalR();
 
 builder.Services.AddExceptionHandling();
+
+// Adds Swagger services for API documentation and testing.
+// Swagger generates interactive API docs that make it easy to explore and test endpoints.
+builder.Services.AddEndpointsApiExplorer();
+
+// Configures Swagger with custom settings.
+builder.Services.AddSwaggerGen(options =>
+{
+    // Defines a Swagger document named "v1" with metadata about the API.
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "ArtAuctionHub API",
+        Version = "v1",
+        Description = "API documentation for ArtAuctionHub"
+    });
+
+    // If you want to include JWT authentication in Swagger UI:
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Enter your valid token."
+    });
+    // Adds a security requirement to use the defined Bearer scheme.
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
+
 // Builds the WebApplication object from the builder.
 // This is the main object used to configure the app's request pipeline
 // and define routes, middleware, and more.
@@ -193,6 +237,14 @@ app.MapGet("/weatherforecast", () =>
 
 // This line adds automatic update database migrations.
 app.MigrateDatabase<ArtAuctionHubDbContext>();
+
+// Configures Swagger middleware to serve the generated Swagger JSON
+// and the Swagger UI, but only in non-production and non-staging environments.
+if (!app.Environment.IsStaging() && !app.Environment.IsProduction())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 // Starts the application and begins listening for HTTP requests.
 // This is the final step where the app becomes active.

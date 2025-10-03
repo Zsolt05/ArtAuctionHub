@@ -47,10 +47,10 @@ namespace ArtAuctionHub.API.Controllers
         [HttpPost]
         [Authorize(Roles = RoleNames.Artist)] // Only users with the "Artist" role can access this endpoint.
         // POST /api/artworks
-        public async Task<IActionResult> CreateArtworkAsync([FromForm] ArtworkDto dto, [FromForm] IFormFile imageFile)
+        public async Task<IActionResult> CreateArtworkAsync([FromForm] CreateArtworkForm createArtworkForm)
         {
-            _logger.LogInformation("User {User} is creating a new artwork: {Title}", User.GetUserName(), dto.Title);
-            var createdArtwork = await _artworkService.CreateArtworkAsync(dto, imageFile, User);
+            _logger.LogInformation("User {User} is creating a new artwork: {Title}", User.GetUserName(), createArtworkForm.Title);
+            var createdArtwork = await _artworkService.CreateArtworkAsync(createArtworkForm, User);
             _logger.LogInformation("Artwork created successfully: {ArtworkId} by user {User}", createdArtwork.Id, User.GetUserName());
 
             _cacheService.Remove(CacheKeyNames.AllArtworks); // Invalidate the cache for all artworks
