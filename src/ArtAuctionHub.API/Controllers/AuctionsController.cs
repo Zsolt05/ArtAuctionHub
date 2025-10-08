@@ -1,7 +1,9 @@
 ﻿using ArtAuctionHub.Application.DTOs.Auction;
 using ArtAuctionHub.Application.Interfaces;
+using ArtAuctionHub.Domain.Entities;
 using ArtAuctionHub.Shared.Constants;
 using ArtAuctionHub.Shared.Extensions;
+using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -22,16 +24,20 @@ namespace ArtAuctionHub.API.Controllers
     {
         private readonly IAuctionService _auctionService;
         private readonly ILogger<AuctionsController> _logger;
+        private readonly IMapper _mapper;
 
         /// <summary>
         /// Constructor for AuctionsController.
         /// </summary>
         /// <param name="auctionService">Injected auction service.</param>
         /// <param name="logger">Logger for auction actions.</param>
-        public AuctionsController(IAuctionService auctionService, ILogger<AuctionsController> logger)
+        /// <param name="mapper">AutoMapper instance for DTO mapping.</param>
+        public AuctionsController(IAuctionService auctionService,
+            ILogger<AuctionsController> logger, IMapper mapper)
         {
             _auctionService = auctionService;
             _logger = logger;
+            _mapper = mapper;
         }
 
         /// <summary>
@@ -45,9 +51,11 @@ namespace ArtAuctionHub.API.Controllers
         {
             int userId = User.GetUserId();
             _logger.LogInformation("User {UserId} is starting a new auction for artwork {ArtworkId}", userId, dto.ArtworkId);
-            var createdAuction = await _auctionService.CreateAuctionAsync(userId, dto);
+            var auction = _mapper.Map<Auction>(dto);
+            var createdAuction = await _auctionService.CreateAuctionAsync(userId, auction);
             _logger.LogInformation("Auction created for artwork {ArtworkId} by user {UserId}", dto.ArtworkId, userId);
-            return CreatedAtAction(nameof(GetAuctionDetails), new { id = dto.ArtworkId }, createdAuction);
+            var createdAuctionDto = _mapper.Map<AuctionDto>(createdAuction);
+            return CreatedAtAction(nameof(GetAuctionDetails), new { auctionId = createdAuction.Id }, createdAuctionDto);
         }
 
         /// <summary>
@@ -62,9 +70,11 @@ namespace ArtAuctionHub.API.Controllers
         {
             int userId = User.GetUserId();
             _logger.LogInformation("User {UserId} is editing auction {AuctionId}", userId, auctionId);
-            var updatedAuction = await _auctionService.UpdateAuctionAsync(userId, auctionId, dto);
+            var auction = _mapper.Map<Auction>(dto);
+            var updatedAuction = await _auctionService.UpdateAuctionAsync(userId, auctionId, auction);
             _logger.LogInformation("Auction {AuctionId} updated by user {UserId}", auctionId, userId);
-            return Ok(updatedAuction);
+            var updatedAuctionDto = _mapper.Map<AuctionDto>(updatedAuction);
+            return Ok(updatedAuctionDto);
         }
 
         /// <summary>
@@ -92,7 +102,8 @@ namespace ArtAuctionHub.API.Controllers
         {
             _logger.LogInformation("Retrieving all active auctions");
             var activeAuctions = await _auctionService.GetActiveAuctionsAsync();
-            return Ok(activeAuctions);
+            var activeAuctionDtos = _mapper.Map<IEnumerable<AuctionDto>>(activeAuctions);
+            return Ok(activeAuctionDtos);
         }
 
         /// <summary>
@@ -107,7 +118,8 @@ namespace ArtAuctionHub.API.Controllers
             int userId = User.GetUserId();
             _logger.LogInformation("Retrieving auctions for user {UserId}", userId);
             var myAuctions = await _auctionService.GetUserAuctionsAsync(userId);
-            return Ok(myAuctions);
+            var myAuctionDtos = _mapper.Map<IEnumerable<AuctionDto>>(myAuctions);
+            return Ok(myAuctionDtos);
         }
 
         /// <summary>
@@ -125,7 +137,8 @@ namespace ArtAuctionHub.API.Controllers
                 _logger.LogWarning("Auction with ID {AuctionId} not found", auctionId);
                 return NotFound(new { message = $"Auction with ID {auctionId} not found." });
             }
-            return Ok(auctionDetails);
+            var auctionDetailsDto = _mapper.Map<AuctionDto>(auctionDetails);
+            return Ok(auctionDetailsDto);
         }
     }
 }

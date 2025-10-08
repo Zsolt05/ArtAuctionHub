@@ -1,5 +1,4 @@
-﻿using ArtAuctionHub.Application.DTOs.Auction;
-using ArtAuctionHub.Application.Interfaces;
+﻿using ArtAuctionHub.Application.Interfaces;
 using ArtAuctionHub.Domain.Entities;
 using ArtAuctionHub.Domain.Interfaces;
 using ArtAuctionHub.Domain.Interfaces.Repositories;
@@ -39,33 +38,25 @@ namespace ArtAuctionHub.Infrastructure.Services
         }
 
         /// <inheritdoc />
-        public async Task<AuctionDto> CreateAuctionAsync(int userId, AuctionDto dto)
+        public async Task<Auction> CreateAuctionAsync(int userId, Auction createAuction)
         {
-            _logger.LogInformation("User {UserId} is creating an auction for artwork {ArtworkId}", userId, dto.ArtworkId);
-            var artworkExists = await _artworks.AnyAsync(a => a.Id == dto.ArtworkId && a.ArtistId == userId);
+            _logger.LogInformation("User {UserId} is creating an auction for artwork {ArtworkId}", userId, createAuction.ArtworkId);
+            var artworkExists = await _artworks.AnyAsync(a => a.Id == createAuction.ArtworkId && a.ArtistId == userId);
             if (!artworkExists)
             {
-                _logger.LogWarning("Artwork with ID {ArtworkId} does not exist for user {UserId}", dto.ArtworkId, userId);
-                throw new ArgumentException($"Artwork with ID {dto.ArtworkId} does not exist.");
+                _logger.LogWarning("Artwork with ID {ArtworkId} does not exist for user {UserId}", createAuction.ArtworkId, userId);
+                throw new ArgumentException($"Artwork with ID {createAuction.ArtworkId} does not exist.");
             }
 
-            var auction = new Auction
-            {
-                ArtworkId = dto.ArtworkId,
-                StartDate = dto.StartDate,
-                EndDate = dto.EndDate,
-                StartingPrice = dto.StartingPrice
-            };
-
-            await _auctions.AddAsync(auction);
+            await _auctions.AddAsync(createAuction);
             await _uow.SaveChangesAsync();
-            _logger.LogInformation("Auction created for artwork {ArtworkId} by user {UserId}", dto.ArtworkId, userId);
+            _logger.LogInformation("Auction created for artwork {ArtworkId} by user {UserId}", createAuction.ArtworkId, userId);
 
-            return dto;
+            return createAuction;
         }
 
         /// <inheritdoc />
-        public async Task<AuctionDto> UpdateAuctionAsync(int userId, int auctionId, AuctionDto dto)
+        public async Task<Auction> UpdateAuctionAsync(int userId, int auctionId, Auction dto)
         {
             _logger.LogInformation("User {UserId} is updating auction {AuctionId}", userId, auctionId);
             var auction = await _auctions.FirstOrDefaultAsync(a => a.Id == auctionId && a.Artwork.ArtistId == userId);
@@ -104,38 +95,26 @@ namespace ArtAuctionHub.Infrastructure.Services
         }
 
         /// <inheritdoc />
-        public async Task<IEnumerable<AuctionDto>> GetActiveAuctionsAsync()
+        public async Task<IEnumerable<Auction>> GetActiveAuctionsAsync()
         {
             _logger.LogInformation("Retrieving all active auctions");
             var now = DateTime.UtcNow;
             var items = await _auctions.ListActiveAsync(now);
             _logger.LogInformation("Returned {Count} active auctions", items.Count);
-            return items.Select(a => new AuctionDto
-            {
-                ArtworkId = a.ArtworkId,
-                StartDate = a.StartDate,
-                EndDate = a.EndDate,
-                StartingPrice = a.StartingPrice
-            });
+            return items;
         }
 
         /// <inheritdoc />
-        public async Task<IEnumerable<AuctionDto>> GetUserAuctionsAsync(int userId)
+        public async Task<IEnumerable<Auction>> GetUserAuctionsAsync(int userId)
         {
             _logger.LogInformation("Retrieving auctions for user {UserId}", userId);
             var items = await _auctions.ListForCurrentUserAsync(userId);
             _logger.LogInformation("Returned {Count} auctions for user {UserId}", items.Count, userId);
-            return items.Select(a => new AuctionDto
-            {
-                ArtworkId = a.ArtworkId,
-                StartDate = a.StartDate,
-                EndDate = a.EndDate,
-                StartingPrice = a.StartingPrice
-            });
+            return items;
         }
 
         /// <inheritdoc />
-        public async Task<AuctionDto?> GetAuctionByIdAsync(int id)
+        public async Task<Auction?> GetAuctionByIdAsync(int id)
         {
             _logger.LogInformation("Retrieving auction details for auction {AuctionId}", id);
             var auction = await _auctions.FirstOrDefaultAsync(a => a.Id == id);
@@ -144,14 +123,7 @@ namespace ArtAuctionHub.Infrastructure.Services
                 _logger.LogWarning("Auction with ID {AuctionId} not found", id);
                 return null;
             }
-
-            return new AuctionDto
-            {
-                ArtworkId = auction.ArtworkId,
-                StartDate = auction.StartDate,
-                EndDate = auction.EndDate,
-                StartingPrice = auction.StartingPrice
-            };
+            return auction;
         }
     }
 }

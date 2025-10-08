@@ -1,4 +1,4 @@
-﻿using ArtAuctionHub.Application.DTOs.Auction;
+﻿using ArtAuctionHub.Domain.Entities;
 
 namespace ArtAuctionHub.Application.Interfaces
 {
@@ -12,18 +12,18 @@ namespace ArtAuctionHub.Application.Interfaces
         /// Creates a new auction with the provided details.
         /// </summary>
         /// <param name="userId">User ID of the currently authenticated user.</param>
-        /// <param name="dto">Auction data transfer object containing the auction details.</param>
+        /// <param name="createAuction">Auction model containing the auction details.</param>
         /// <returns>AuctionDto representing the created auction.</returns>
-        Task<AuctionDto> CreateAuctionAsync(int userId, AuctionDto dto);
+        Task<Auction> CreateAuctionAsync(int userId, Auction createAuction);
 
         /// <summary>
         /// Updates an existing auction identified by its ID with the provided details.
         /// </summary>
         /// <param name="userId">User ID of the currently authenticated user.</param>
         /// <param name="auctionId">Auction ID to identify the auction to be updated.</param>
-        /// <param name="dto">Auction data transfer object containing the updated auction details.</param>
+        /// <param name="updateAuction">Auction model containing the updated auction details.</param>
         /// <returns>AuctionDto representing the updated auction.</returns>
-        Task<AuctionDto> UpdateAuctionAsync(int userId, int auctionId, AuctionDto dto);
+        Task<Auction> UpdateAuctionAsync(int userId, int auctionId, Auction updateAuction);
 
         /// <summary>
         /// Deletes an auction identified by its ID.
@@ -35,21 +35,21 @@ namespace ArtAuctionHub.Application.Interfaces
         /// <summary>
         /// Retrieves a list of active auctions.
         /// </summary>
-        /// <returns>A collection of AuctionDto representing active auctions.</returns>
-        Task<IEnumerable<AuctionDto>> GetActiveAuctionsAsync();
+        /// <returns>A collection of Auctions representing the active auctions.</returns>
+        Task<IEnumerable<Auction>> GetActiveAuctionsAsync();
 
         /// <summary>
         /// Retrieves a list of auctions created by the currently authenticated user.
         /// </summary>
         /// <param name="userId">User ID of the currently authenticated user.</param>
-        /// <returns>A collection of AuctionDto representing the user's auctions.</returns>
-        Task<IEnumerable<AuctionDto>> GetUserAuctionsAsync(int userId);
+        /// <returns>A collection of Auctions created by the user.</returns>
+        Task<IEnumerable<Auction>> GetUserAuctionsAsync(int userId);
 
         /// <summary>
         /// Retrieves an auction by its ID.
         /// </summary>
         /// <param name="id">Auction ID to identify the auction to be retrieved.</param>
-        /// <returns>AuctionDto representing the auction with the specified ID.</returns>
-        Task<AuctionDto?> GetAuctionByIdAsync(int id);
+        /// <returns>Auction if found; otherwise, null.</returns>
+        Task<Auction?> GetAuctionByIdAsync(int id);
     }
 }

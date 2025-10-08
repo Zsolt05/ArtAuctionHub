@@ -44,7 +44,7 @@ namespace ArtAuctionHub.Infrastructure.Services
         /// Creates a new <see cref="Artwork"/> and saves the uploaded image to the file system.
         /// The entity is persisted through the repository and committed via the unit of work.
         /// </summary>
-        /// <param name="dto">Incoming data used to populate the artwork.</param>
+        /// <param name="createArtwork">Artwork to be created.</param>
         /// <param name="imageFile">Uploaded file to be stored under the <c>uploads</c> folder.</param>
         /// <returns>A read model for the created artwork.</returns>
         /// <exception cref="ArgumentException">Thrown when the file is missing or has an invalid extension.</exception>
@@ -146,7 +146,7 @@ namespace ArtAuctionHub.Infrastructure.Services
         }
 
         /// <summary>
-        /// Retrieves all artworks as read models. Uses a read-optimized, non-tracked query in the repository.
+        /// Retrieves all artworks from the database.
         /// </summary>
         public async Task<IEnumerable<Artwork>> GetAllArtworksAsync()
         {
@@ -159,7 +159,7 @@ namespace ArtAuctionHub.Infrastructure.Services
         /// <summary>
         /// Retrieves artworks for the current user.
         /// </summary>
-        /// <param name="userId">The current user's id (to be wired from auth later).</param>
+        /// <param name="userId">The current user's id.</param>
         public async Task<IEnumerable<Artwork>> GetMyArtworksAsync(int userId)
         {
             _logger.LogInformation("Retrieving artworks for user {UserId}", userId);
