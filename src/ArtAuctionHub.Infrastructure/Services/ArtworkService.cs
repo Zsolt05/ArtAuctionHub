@@ -1,9 +1,9 @@
-﻿using ArtAuctionHub.Application.DTOs.ArtWork;
-using ArtAuctionHub.Application.Interfaces;
+﻿using ArtAuctionHub.Application.Interfaces;
 using ArtAuctionHub.Domain.Entities;
 using ArtAuctionHub.Domain.Interfaces;
 using ArtAuctionHub.Domain.Interfaces.Repositories;
 using ArtAuctionHub.Shared.Extensions;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Security.Claims;
@@ -48,58 +48,41 @@ namespace ArtAuctionHub.Infrastructure.Services
         /// <param name="imageFile">Uploaded file to be stored under the <c>uploads</c> folder.</param>
         /// <returns>A read model for the created artwork.</returns>
         /// <exception cref="ArgumentException">Thrown when the file is missing or has an invalid extension.</exception>
-        public async Task<ReadArtworkDto> CreateArtworkAsync(CreateArtworkForm createArtworkForm, ClaimsPrincipal user)
+        public async Task<Artwork> CreateArtworkAsync(Artwork createArtwork, IFormFile imageFile, ClaimsPrincipal user)
         {
-            _logger.LogInformation("User {User} is creating a new artwork: {Title}", user.GetUserName(), createArtworkForm.Title);
-            if (createArtworkForm.ImageFile is null || createArtworkForm.ImageFile.Length == 0)
-                throw new ArgumentException("Image file is required.", nameof(createArtworkForm.ImageFile));
+            _logger.LogInformation("User {User} is creating a new artwork: {Title}", user.GetUserName(), createArtwork.Title);
+            if (imageFile is null || imageFile.Length == 0)
+                throw new ArgumentException("Image file is required.", nameof(imageFile));
 
             var validExtensions = new[] { ".jpg", ".jpeg", ".png" };
-            var ext = Path.GetExtension(createArtworkForm.ImageFile.FileName).ToLowerInvariant();
+            var ext = Path.GetExtension(imageFile.FileName).ToLowerInvariant();
             if (!validExtensions.Contains(ext))
-                throw new ArgumentException("Invalid image format. Allowed: jpg, jpeg, png.", nameof(createArtworkForm.ImageFile));
+                throw new ArgumentException("Invalid image format. Allowed: jpg, jpeg, png.", nameof(imageFile));
 
-            var artwork = new Artwork
-            {
-                Title = createArtworkForm.Title,
-                Description = createArtworkForm.Description,
-                IsAdultOnly = createArtworkForm.IsAdultOnly,
-                CategoryId = createArtworkForm.CategoryId,
-                ArtistId = user.GetUserId(),
-                ArtistName = user.GetUserName()
-            };
+            createArtwork.ArtistId = user.GetUserId();
+            createArtwork.ArtistName = user.GetUserName();
+
 
             // Ensure folder exists
             var uploadPath = Path.Combine(_environment.ContentRootPath, "uploads");
             Directory.CreateDirectory(uploadPath);
 
             // Persist file
-            var fileName = artwork.CodeName + ext; // assuming CodeName is generated in ctor or by EF
+            var fileName = createArtwork.CodeName + ext; // assuming CodeName is generated in ctor or by EF
             var filePath = Path.Combine(uploadPath, fileName);
             using (var stream = File.Create(filePath))
             {
-                await createArtworkForm.ImageFile.CopyToAsync(stream);
+                await imageFile.CopyToAsync(stream);
             }
-            artwork.ImageUrl = $"/uploads/{fileName}";
+            createArtwork.ImageUrl = $"/uploads/{fileName}";
 
             // Save via repo + commit via UoW
-            await _artworks.AddAsync(artwork);
+            await _artworks.AddAsync(createArtwork);
             await _uow.SaveChangesAsync();
 
-            _logger.LogInformation("Artwork created successfully: {ArtworkId} by user {User}", artwork.Id, user.GetUserName());
+            _logger.LogInformation("Artwork created successfully: {ArtworkId} by user {User}", createArtwork.Id, user.GetUserName());
 
-            return new ReadArtworkDto
-            {
-                Id = artwork.Id,
-                Title = artwork.Title,
-                Description = artwork.Description,
-                CodeName = artwork.CodeName,
-                ImageUrl = artwork.ImageUrl,
-                IsAdultOnly = artwork.IsAdultOnly,
-                CategoryId = artwork.CategoryId,
-                ArtistName = artwork.ArtistName,
-                CreatedDate = DateTime.UtcNow
-            };
+            return createArtwork;
         }
 
         /// <summary>
@@ -107,10 +90,10 @@ namespace ArtAuctionHub.Infrastructure.Services
         /// Image replacement is not performed by this method.
         /// </summary>
         /// <param name="id">Artwork identifier.</param>
-        /// <param name="dto">Incoming changes.</param>
+        /// <param name="updateArtwork">Incoming changes.</param>
         /// <returns>The updated read model.</returns>
         /// <exception cref="KeyNotFoundException">Thrown if the artwork does not exist.</exception>
-        public async Task<ReadArtworkDto> UpdateArtworkAsync(int id, ArtworkDto dto, ClaimsPrincipal user)
+        public async Task<Artwork> UpdateArtworkAsync(int id, Artwork updateArtwork, ClaimsPrincipal user)
         {
             _logger.LogInformation("User {User} is updating artwork {ArtworkId}", user.GetUserName(), id);
             var artwork = await _artworks.GetByIdAsync(id)
@@ -122,28 +105,17 @@ namespace ArtAuctionHub.Infrastructure.Services
                 throw new UnauthorizedAccessException("You are not authorized to update this artwork.");
             }
 
-            artwork.Title = dto.Title;
-            artwork.Description = dto.Description;
-            artwork.IsAdultOnly = dto.IsAdultOnly;
-            artwork.CategoryId = dto.CategoryId;
+            artwork.Title = updateArtwork.Title;
+            artwork.Description = updateArtwork.Description;
+            artwork.IsAdultOnly = updateArtwork.IsAdultOnly;
+            artwork.CategoryId = updateArtwork.CategoryId;
 
             _artworks.Update(artwork);
             await _uow.SaveChangesAsync();
 
             _logger.LogInformation("Artwork {ArtworkId} updated successfully by user {User}", id, user.GetUserName());
 
-            return new ReadArtworkDto
-            {
-                Id = artwork.Id,
-                Title = artwork.Title,
-                Description = artwork.Description,
-                CodeName = artwork.CodeName,
-                ImageUrl = artwork.ImageUrl,
-                IsAdultOnly = artwork.IsAdultOnly,
-                CategoryId = artwork.CategoryId,
-                ArtistName = artwork.ArtistName,
-                CreatedDate = DateTime.UtcNow
-            };
+            return artwork;
         }
 
         /// <summary>
@@ -176,46 +148,24 @@ namespace ArtAuctionHub.Infrastructure.Services
         /// <summary>
         /// Retrieves all artworks as read models. Uses a read-optimized, non-tracked query in the repository.
         /// </summary>
-        public async Task<IEnumerable<ReadArtworkDto>> GetAllArtworksAsync()
+        public async Task<IEnumerable<Artwork>> GetAllArtworksAsync()
         {
             _logger.LogInformation("Retrieving all artworks");
             var entities = await _artworks.GetAllAsync();
             _logger.LogInformation("Returned {Count} artworks", entities.Count);
-            return entities.Select(a => new ReadArtworkDto
-            {
-                Id = a.Id,
-                Title = a.Title,
-                Description = a.Description,
-                CodeName = a.CodeName,
-                ImageUrl = a.ImageUrl,
-                IsAdultOnly = a.IsAdultOnly,
-                CategoryId = a.CategoryId,
-                ArtistName = a.ArtistName,
-                CreatedDate = DateTime.UtcNow
-            });
+            return entities;
         }
 
         /// <summary>
         /// Retrieves artworks for the current user.
         /// </summary>
         /// <param name="userId">The current user's id (to be wired from auth later).</param>
-        public async Task<IEnumerable<ReadArtworkDto>> GetMyArtworksAsync(int userId)
+        public async Task<IEnumerable<Artwork>> GetMyArtworksAsync(int userId)
         {
             _logger.LogInformation("Retrieving artworks for user {UserId}", userId);
             var entities = await _artworks.GetByArtistIdAsync(userId);
             _logger.LogInformation("Returned {Count} artworks for user {UserId}", entities.Count, userId);
-            return entities.Select(a => new ReadArtworkDto
-            {
-                Id = a.Id,
-                Title = a.Title,
-                Description = a.Description,
-                CodeName = a.CodeName,
-                ImageUrl = a.ImageUrl,
-                IsAdultOnly = a.IsAdultOnly,
-                CategoryId = a.CategoryId,
-                ArtistName = a.ArtistName,
-                CreatedDate = DateTime.UtcNow
-            });
+            return entities;
         }
     }
 }

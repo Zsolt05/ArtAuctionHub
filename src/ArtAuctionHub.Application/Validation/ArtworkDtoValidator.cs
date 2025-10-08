@@ -20,10 +20,6 @@ namespace ArtAuctionHub.Application.Validation
                 .NotEmpty().WithMessage("Description is required.")
                 .MaximumLength(4000).WithMessage("Description cannot exceed 4000 characters.");
 
-            RuleFor(x => x.ImageUrl)
-                .Must(url => string.IsNullOrWhiteSpace(url) || Uri.IsWellFormedUriString(url, UriKind.Absolute))
-                .WithMessage("ImageUrl must be a valid URL.");
-
             RuleFor(x => x.CategoryId)
                 .GreaterThan(0).WithMessage("CategoryId must be greater than 0.");
         }

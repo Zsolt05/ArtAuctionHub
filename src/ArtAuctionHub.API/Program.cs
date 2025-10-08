@@ -105,8 +105,8 @@ builder.Services.AddSignalR();
 // Adds custom exception handling services to the application.
 builder.Services.AddExceptionHandling();
 
-// Adds custom validation services to the application.
-builder.Services.AddAppValidators();
+// Adds application-specific services like AutoMapper and FluentValidation.
+builder.Services.AddAppServices();
 
 // Adds Swagger services for API documentation and testing.
 // Swagger generates interactive API docs that make it easy to explore and test endpoints.

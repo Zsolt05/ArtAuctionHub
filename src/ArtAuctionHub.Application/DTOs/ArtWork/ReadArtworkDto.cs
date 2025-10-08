@@ -14,5 +14,10 @@
         /// The date and time when the artwork was created.
         /// </summary>
         public DateTime CreatedDate { get; init; }
+
+        /// <summary>
+        /// The URL pointing to an image of the artwork.
+        /// </summary>
+        public string ImageUrl { get; set; } = default!;
     }
 }

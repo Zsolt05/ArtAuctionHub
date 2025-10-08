@@ -21,11 +21,6 @@
         public string Description { get; set; } = default!;
 
         /// <summary>
-        /// The URL pointing to an image of the artwork.
-        /// </summary>
-        public string ImageUrl { get; set; } = default!;
-
-        /// <summary>
         /// A flag indicating if the artwork is restricted to adult audiences (18+ content).
         /// This is used to prevent minors from viewing explicit content.
         /// </summary>

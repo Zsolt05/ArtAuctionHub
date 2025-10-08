@@ -92,7 +92,7 @@ namespace ArtAuctionHub.API.Controllers
                 slidingExpireTime: TimeSpan.FromMinutes(2)
             );
 
-            var favoritesDto = favorites?.Select(f => new ArtworkDto
+            var favoritesDto = favorites?.Select(f => new ReadArtworkDto
             {
                 Title = f.Title,
                 Description = f.Description,

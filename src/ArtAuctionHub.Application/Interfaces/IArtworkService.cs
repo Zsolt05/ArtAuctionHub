@@ -1,6 +1,6 @@
-﻿using System.Security.Claims;
-using ArtAuctionHub.Application.DTOs.ArtWork;
+﻿using ArtAuctionHub.Domain.Entities;
 using Microsoft.AspNetCore.Http;
+using System.Security.Claims;
 
 namespace ArtAuctionHub.Application.Interfaces
 {
@@ -14,12 +14,12 @@ namespace ArtAuctionHub.Application.Interfaces
         /// <summary>
         /// Creates a new artwork and saves the uploaded image to the file system.
         /// </summary>
-        Task<ReadArtworkDto> CreateArtworkAsync(CreateArtworkForm createArtworkForm, ClaimsPrincipal user);
+        Task<Artwork> CreateArtworkAsync(Artwork createArtwork, IFormFile imageFile, ClaimsPrincipal user);
 
         /// <summary>
         /// Updates an artwork in the database (excluding image update).
         /// </summary>
-        Task<ReadArtworkDto> UpdateArtworkAsync(int id, ArtworkDto dto, ClaimsPrincipal user);
+        Task<Artwork> UpdateArtworkAsync(int id, Artwork dto, ClaimsPrincipal user);
 
         /// <summary>
         /// Deletes an artwork and its image from the database and file system.
@@ -29,12 +29,12 @@ namespace ArtAuctionHub.Application.Interfaces
         /// <summary>
         /// Retrieves all artworks from the database.
         /// </summary>
-        Task<IEnumerable<ReadArtworkDto>> GetAllArtworksAsync();
+        Task<IEnumerable<Artwork>> GetAllArtworksAsync();
 
         /// <summary>
         /// Retrieves artworks created by the currently authenticated user from the database.
         /// </summary>
-        Task<IEnumerable<ReadArtworkDto>> GetMyArtworksAsync(int userId);
+        Task<IEnumerable<Artwork>> GetMyArtworksAsync(int userId);
 
         #endregion
     }

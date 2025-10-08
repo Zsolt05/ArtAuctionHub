@@ -1,7 +1,9 @@
 ﻿using ArtAuctionHub.Application.DTOs.ArtWork;
 using ArtAuctionHub.Application.Interfaces;
+using ArtAuctionHub.Domain.Entities;
 using ArtAuctionHub.Shared.Constants;
 using ArtAuctionHub.Shared.Extensions;
+using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -24,6 +26,7 @@ namespace ArtAuctionHub.API.Controllers
         private readonly IArtworkService _artworkService;
         private readonly ILogger<ArtworksController> _logger;
         private readonly ICacheService _cacheService;
+        private readonly IMapper _mapper;
 
         /// <summary>
         /// Constructor for ArtworksController.
@@ -31,11 +34,16 @@ namespace ArtAuctionHub.API.Controllers
         /// <param name="artworkService">Injected artwork service.</param>
         /// <param name="logger">Logger for artwork actions.</param>
         /// <param name="cacheService">Injected cache service.</param>
-        public ArtworksController(IArtworkService artworkService, ILogger<ArtworksController> logger, ICacheService cacheService)
+        /// <param name="mapper">Injected AutoMapper instance.</param>
+        public ArtworksController(IArtworkService artworkService,
+            ILogger<ArtworksController> logger,
+            ICacheService cacheService,
+            IMapper mapper)
         {
             _artworkService = artworkService;
             _logger = logger;
             _cacheService = cacheService;
+            _mapper = mapper;
         }
 
         /// <summary>
@@ -49,13 +57,16 @@ namespace ArtAuctionHub.API.Controllers
         // POST /api/artworks
         public async Task<IActionResult> CreateArtworkAsync([FromForm] CreateArtworkForm createArtworkForm)
         {
+            var artwork = _mapper.Map<Artwork>(createArtworkForm);
             _logger.LogInformation("User {User} is creating a new artwork: {Title}", User.GetUserName(), createArtworkForm.Title);
-            var createdArtwork = await _artworkService.CreateArtworkAsync(createArtworkForm, User);
+            var createdArtwork = await _artworkService.CreateArtworkAsync(artwork, createArtworkForm.ImageFile, User);
             _logger.LogInformation("Artwork created successfully: {ArtworkId} by user {User}", createdArtwork.Id, User.GetUserName());
 
             _cacheService.Remove(CacheKeyNames.AllArtworks); // Invalidate the cache for all artworks
 
-            return CreatedAtAction(nameof(GetAll), new { id = createdArtwork.Id }, createdArtwork);
+            var createdDto = _mapper.Map<ReadArtworkDto>(createdArtwork);
+
+            return CreatedAtAction(nameof(GetAll), new { id = createdDto.Id }, createdDto);
         }
 
         /// <summary>
@@ -66,13 +77,16 @@ namespace ArtAuctionHub.API.Controllers
         // PUT /api/artworks/{id}
         public async Task<IActionResult> UpdateArtworkAsync(int id, [FromBody] ArtworkDto dto)
         {
+            var artwork = _mapper.Map<Artwork>(dto);
             _logger.LogInformation("User {User} is updating artwork {ArtworkId}", User.GetUserName(), id);
-            var updatedArtwork = await _artworkService.UpdateArtworkAsync(id, dto, User);
+            var updatedArtwork = await _artworkService.UpdateArtworkAsync(id, artwork, User);
             _logger.LogInformation("Artwork {ArtworkId} updated successfully by user {User}", id, User.GetUserName());
 
             _cacheService.Remove(CacheKeyNames.AllArtworks); // Invalidate the cache for all artworks
 
-            return Ok(updatedArtwork);
+            var updatedDto = _mapper.Map<ReadArtworkDto>(updatedArtwork);
+
+            return Ok(updatedDto);
         }
 
         /// <summary>
@@ -108,7 +122,10 @@ namespace ArtAuctionHub.API.Controllers
             );
 
             _logger.LogInformation("Returned {Count} artworks", artworks?.Count() ?? 0);
-            return Ok(artworks);
+
+            var artworksDto = _mapper.Map<IEnumerable<ReadArtworkDto>>(artworks);
+
+            return Ok(artworksDto);
         }
 
         /// <summary>
@@ -124,7 +141,8 @@ namespace ArtAuctionHub.API.Controllers
             _logger.LogInformation("Retrieving artworks for user {UserId}", userId);
             var artworks = await _artworkService.GetMyArtworksAsync(userId);
             _logger.LogInformation("Returned {Count} artworks for user {UserId}", artworks?.Count() ?? 0, userId);
-            return Ok(artworks);
+            var artworksDto = _mapper.Map<IEnumerable<ReadArtworkDto>>(artworks);
+            return Ok(artworksDto);
         }
     }
 }
