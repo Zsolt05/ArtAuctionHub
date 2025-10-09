@@ -2,6 +2,7 @@
 using ArtAuctionHub.Application.Interfaces;
 using ArtAuctionHub.Shared.Constants;
 using ArtAuctionHub.Shared.Extensions;
+using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -24,6 +25,7 @@ namespace ArtAuctionHub.API.Controllers
         private readonly IFavoriteService _favoriteService;
         private readonly ILogger<FavoritesController> _logger;
         private readonly ICacheService _cacheService;
+        private readonly IMapper _mapper;
 
         /// <summary>
         /// Constructor for FavoritesController.
@@ -31,11 +33,15 @@ namespace ArtAuctionHub.API.Controllers
         /// <param name="favoriteService">Injected favorite service.</param>
         /// <param name="logger">Logger for favorite actions.</param>
         /// <param name="cacheService">Cache service for caching favorite data.</param>
-        public FavoritesController(IFavoriteService favoriteService, ILogger<FavoritesController> logger, ICacheService cacheService)
+        /// <param name="mapper">AutoMapper instance for object mapping.</param>
+        public FavoritesController(IFavoriteService favoriteService, 
+            ILogger<FavoritesController> logger, ICacheService cacheService,
+            IMapper mapper)
         {
             _favoriteService = favoriteService;
             _logger = logger;
             _cacheService = cacheService;
+            _mapper = mapper;
         }
 
         /// <summary>
@@ -92,15 +98,7 @@ namespace ArtAuctionHub.API.Controllers
                 slidingExpireTime: TimeSpan.FromMinutes(2)
             );
 
-            var favoritesDto = favorites?.Select(f => new ReadArtworkDto
-            {
-                Title = f.Title,
-                Description = f.Description,
-                ImageUrl = f.ImageUrl,
-                CategoryId = f.CategoryId,
-                CodeName = f.CodeName,
-                IsAdultOnly = f.IsAdultOnly
-            }).ToList() ?? [];
+            var favoritesDto = _mapper.Map<List<ReadArtworkDto>>(favorites);
 
             _logger.LogInformation("Returned {Count} favorites for user {UserId}", favoritesDto.Count, userId);
             return Ok(favoritesDto); // Returns 200 OK with the list of favorite artworks.
