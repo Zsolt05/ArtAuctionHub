@@ -35,7 +35,10 @@ builder.Services.AddInfrastructure(builder.Configuration);
 // Adds a global action filter to validate models on all controllers.
 builder.Services.AddControllers(options =>
 {
+    // Adds a global filter to validate models on all controller actions.
     options.Filters.Add<ValidateModelFilter>();
+    // Adds a global filter to log user actions on all controller actions.
+    options.Filters.Add<LogUserActionFilter>();
 });
 
 // Disables the automatic model state validation that ASP.NET Core does.
@@ -94,6 +97,9 @@ builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<ICacheService, MemoryCacheService>();
 
 builder.Services.AddScoped<PasswordHasherService>();
+
+// Registers check filter to validate age for accessing adult content.
+builder.Services.AddScoped<AdultContentAgeCheckFilter>();
 
 // Registers SignalR services for real-time web functionality.
 // SignalR allows server-side code to push content to connected clients instantly.

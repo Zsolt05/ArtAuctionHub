@@ -1,4 +1,5 @@
-﻿using ArtAuctionHub.Application.DTOs.ArtWork;
+﻿using ArtAuctionHub.API.Filters;
+using ArtAuctionHub.Application.DTOs.ArtWork;
 using ArtAuctionHub.Application.Interfaces;
 using ArtAuctionHub.Shared.Constants;
 using ArtAuctionHub.Shared.Extensions;
@@ -51,6 +52,7 @@ namespace ArtAuctionHub.API.Controllers
         /// <returns>A 200 OK response with a confirmation message.</returns>
         [HttpPost]
         [Route("{artworkId}")] // Matches POST /api/favorites/{artworkId}.
+        [ServiceFilter(typeof(AdultContentAgeCheckFilter))] // Ensures age verification for adult content.
         public async Task<IActionResult> AddFavorite(int artworkId)
         {
             int userId = User.GetUserId();
