@@ -1,5 +1,5 @@
 ﻿using ArtAuctionHub.Application.DTOs.Auth;
-using System.Security.Claims;
+using ArtAuctionHub.Domain.Entities;
 
 namespace ArtAuctionHub.Application.Interfaces
 {
@@ -25,8 +25,8 @@ namespace ArtAuctionHub.Application.Interfaces
         /// <summary>
         /// Retrieves details of the currently authenticated user.
         /// </summary>
-        /// <param name="user">The claims principal (authenticated user context).</param>
-        /// <returns>Information about the current user.</returns>
-        CurrentUserDto GetCurrentUser(ClaimsPrincipal user);
+        /// <param name="userId">The ID of the current user.</param>
+        /// <returns>The current user entity.</returns>
+        User GetCurrentUser(int userId);
     }
 }

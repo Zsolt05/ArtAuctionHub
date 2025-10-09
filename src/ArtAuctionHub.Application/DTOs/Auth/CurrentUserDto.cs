@@ -13,16 +13,16 @@
         /// <summary>
         /// The email address of the authenticated user.
         /// </summary>
-        public string? Email { get; init; }
+        public string Email { get; init; } = default!;
 
         /// <summary>
-        /// Whether the user is authenticated.
+        /// The birth date of the authenticated user.
         /// </summary>
-        public bool Authenticated { get; init; }
+        public DateOnly BirthDate { get; init; }
 
         /// <summary>
         /// The roles assigned to the user.
         /// </summary>
-        public IReadOnlyCollection<string> Roles { get; init; } = Array.Empty<string>();
+        public IReadOnlyCollection<string> Roles { get; init; } = [];
     }
 }

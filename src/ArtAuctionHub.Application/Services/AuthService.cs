@@ -1,8 +1,8 @@
-﻿using System.Security.Claims;
-using ArtAuctionHub.Application.DTOs.Auth;
+﻿using ArtAuctionHub.Application.DTOs.Auth;
 using ArtAuctionHub.Application.Interfaces;
 using ArtAuctionHub.Domain.Entities;
 using ArtAuctionHub.Domain.Interfaces;
+using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 
@@ -17,6 +17,7 @@ namespace ArtAuctionHub.Application.Services
         private readonly RoleManager<Role> _roleManager;
         private readonly IJwtTokenFactory _jwt;
         private readonly ILogger<AuthService> _logger;
+        private readonly IMapper _mapper;
 
         /// <summary>
         /// Constructor for AuthService.
@@ -25,16 +26,19 @@ namespace ArtAuctionHub.Application.Services
         /// <param name="roleManager">Role manager for identity operations.</param>
         /// <param name="jwt">JWT token factory.</param>
         /// <param name="logger">Logger for authentication actions.</param>
+        /// <param name="mapper">AutoMapper instance for object mapping.</param>
         public AuthService(
             UserManager<User> userManager,
             RoleManager<Role> roleManager,
             IJwtTokenFactory jwt,
-            ILogger<AuthService> logger)
+            ILogger<AuthService> logger,
+            IMapper mapper)
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _jwt = jwt;
             _logger = logger;
+            _mapper = mapper;
         }
 
         /// <summary>
@@ -64,12 +68,7 @@ namespace ArtAuctionHub.Application.Services
                 throw new InvalidOperationException($"Unknown role: {dto.Role}");
             }
 
-            var user = new User
-            {
-                UserName = dto.UserName,
-                Email = dto.Email,
-                EmailConfirmed = true
-            };
+            var user = _mapper.Map<User>(dto);
 
             var result = await _userManager.CreateAsync(user, dto.Password);
             if (!result.Succeeded)
@@ -111,31 +110,33 @@ namespace ArtAuctionHub.Application.Services
         }
 
         /// <summary>
-        /// Reads ClaimsPrincipal into a DTO of the current user.
+        /// Retrieves details of the currently authenticated user.
         /// </summary>
-        public CurrentUserDto GetCurrentUser(ClaimsPrincipal user)
+        public User GetCurrentUser(int userId)
         {
-            if (user?.Identity is not { IsAuthenticated: true })
-            {
-                _logger.LogInformation("Current user info requested: Anonymous");
-                return new CurrentUserDto
+            var user = _userManager.Users
+                .Select(u => new User
                 {
-                    Username = "Anonymous",
-                    Email = null,
-                    Authenticated = false,
-                    Roles = Array.Empty<string>()
-                };
-            }
+                    Id = u.Id,
+                    UserName = u.UserName,
+                    Email = u.Email,
+                    BirthDate = u.BirthDate,
+                    Roles = u.Roles.Select(r => new UserRole
+                    {
+                        Role = new Role
+                        {
+                            Name = r.Role.Name,
+                        }
+                    }).ToList(),
 
-            var username = user.Identity!.Name ?? "(no-username)";
-            _logger.LogInformation("Current user info requested: {User}", username);
-            return new CurrentUserDto
+                })
+                .SingleOrDefault(u => u.Id == userId);
+            if (user == null)
             {
-                Username = username,
-                Email = user.FindFirst(ClaimTypes.Email)?.Value,
-                Authenticated = true,
-                Roles = user.FindAll(ClaimTypes.Role).Select(r => r.Value).ToArray()
-            };
+                _logger.LogWarning("GetCurrentUser failed: User ID {UserId} not found.", userId);
+                throw new InvalidOperationException("User not found.");
+            }
+            return user;
         }
     }
 }

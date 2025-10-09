@@ -1,5 +1,8 @@
 ﻿using ArtAuctionHub.Application.DTOs.Auth;
 using ArtAuctionHub.Application.Interfaces;
+using ArtAuctionHub.Domain.Entities;
+using ArtAuctionHub.Shared.Extensions;
+using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -20,16 +23,20 @@ namespace ArtAuctionHub.API.Controllers
     {
         private readonly IAuthService _authService;
         private readonly ILogger<AuthController> _logger;
+        private readonly IMapper _mapper;
 
         /// <summary>
         /// Constructor for AuthController.
         /// </summary>
         /// <param name="authService">An implementation of IAuthService to handle authentication operations. Registered in the Dependency Injection (DI) container.</param>
         /// <param name="logger">The logger instance for logging authentication actions.</param>
-        public AuthController(IAuthService authService, ILogger<AuthController> logger)
+        /// <param name="mapper">The AutoMapper instance for object mapping.</param>
+        public AuthController(IAuthService authService,
+            ILogger<AuthController> logger, IMapper mapper)
         {
             _authService = authService;
             _logger = logger;
+            _mapper = mapper;
         }
 
         /// <summary>
@@ -83,9 +90,14 @@ namespace ArtAuctionHub.API.Controllers
         [Authorize]
         public IActionResult Me()
         {
-            var userInfo = _authService.GetCurrentUser(User);
-            _logger.LogInformation("Current user info requested: {User}", userInfo?.Username ?? "Unknown");
-            return userInfo == null ? throw new UnauthorizedAccessException("User is not authenticated.") : (IActionResult)Ok(userInfo);
+            var userId = User.GetUserId();
+            _logger.LogInformation("Fetching current user info for user ID: {UserId}", userId);
+            var userInfo = _authService.GetCurrentUser(userId);
+            _logger.LogDebug("Current user info: {@UserInfo}", userInfo);
+            var userDto = _mapper.Map<CurrentUserDto>(userInfo);
+            _logger.LogDebug("Mapped CurrentUserDto: {@UserDto}", userDto);
+            _logger.LogInformation("Retrieved current user info for user ID: {UserId}", userId);
+            return Ok(userDto);
         }
     }
 }

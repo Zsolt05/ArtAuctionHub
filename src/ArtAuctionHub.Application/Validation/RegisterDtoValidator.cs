@@ -26,8 +26,8 @@ namespace ArtAuctionHub.Application.Validation
 
             RuleFor(x => x.BirthDate)
                 .NotEmpty().WithMessage("Birth date is required.")
-                .LessThan(DateTime.UtcNow.AddYears(-18))
-                .WithMessage("You must be at least 18 years old to register.");
+                .LessThan(DateTime.Now).WithMessage("Birth date must be in the past.")
+                .Must(date => (DateTime.Now.Year - 100) <= date.Year).WithMessage(CurrentUserDto => "Birth date is not realistic.");
 
             RuleFor(x => x.Role)
                 .Must(r => AllowedRoles.Contains(r))

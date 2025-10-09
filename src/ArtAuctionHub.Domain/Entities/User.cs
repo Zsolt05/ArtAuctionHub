@@ -8,6 +8,11 @@ namespace ArtAuctionHub.Domain.Entities
     public class User : IdentityUser<int>
     {
         /// <summary>
+        /// The user's birth date.
+        /// </summary>
+        public DateOnly BirthDate { get; set; }
+
+        /// <summary>
         /// Navigation property for the user's favorite artworks.
         /// </summary>
         public ICollection<UserFavorites> Favorites { get; set; } = [];
