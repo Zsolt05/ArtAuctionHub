@@ -22,6 +22,19 @@ namespace ArtAuctionHub.Infrastructure.Persistence.Repositories
         public async Task<List<Bid>> ListByUserAsync(int userId, CancellationToken ct = default)
         {
             return await _set
+                .Select(b => new Bid
+                {
+                    Id = b.Id,
+                    Amount = b.Amount,
+                    BidDate = b.BidDate,
+                    UserId = b.UserId,
+                    AuctionId = b.AuctionId,
+                    User = new User
+                    {
+                        Id = b.User.Id,
+                        UserName = b.User.UserName
+                    },
+                })
                 .Where(b => b.UserId == userId)
                 .OrderByDescending(b => b.BidDate)
                 .ToListAsync(ct);

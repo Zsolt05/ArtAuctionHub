@@ -1,7 +1,9 @@
 ﻿using ArtAuctionHub.Application.DTOs.Bid;
 using ArtAuctionHub.Application.Interfaces;
+using ArtAuctionHub.Domain.Entities;
 using ArtAuctionHub.Shared.Constants;
 using ArtAuctionHub.Shared.Extensions;
+using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -22,16 +24,20 @@ namespace ArtAuctionHub.API.Controllers
     {
         private readonly IBidService _bidService;
         private readonly ILogger<BidsController> _logger;
+        private readonly IMapper _mapper;
 
         /// <summary>
         /// Constructor for BidsController.
         /// </summary>
         /// <param name="bidService">Injected bid service.</param>
         /// <param name="logger">Logger for bid actions.</param>
-        public BidsController(IBidService bidService, ILogger<BidsController> logger)
+        /// <param name="mapper">AutoMapper instance for object mapping.</param>
+        public BidsController(IBidService bidService,
+            ILogger<BidsController> logger, IMapper mapper)
         {
             _bidService = bidService;
             _logger = logger;
+            _mapper = mapper;
         }
 
         /// <summary>
@@ -45,7 +51,8 @@ namespace ArtAuctionHub.API.Controllers
         {
             int userId = User.GetUserId();
             _logger.LogInformation("User {UserId} is placing a bid on auction {AuctionId}", userId, dto.AuctionId);
-            await _bidService.PlaceBidAsync(dto, userId);
+            var createBid = _mapper.Map<Bid>(dto);
+            await _bidService.PlaceBidAsync(createBid, userId);
             _logger.LogInformation("Bid placed successfully by user {UserId} on auction {AuctionId}", userId, dto.AuctionId);
             return Ok(new { Message = "Bid placed successfully." });
         }
@@ -62,7 +69,8 @@ namespace ArtAuctionHub.API.Controllers
             int userId = User.GetUserId();
             _logger.LogInformation("Retrieving bids for user {UserId}", userId);
             var myBids = await _bidService.GetBidsForUserAsync(userId);
-            return Ok(myBids); // Returns 200 OK with the user's bids.
+            var myBidsDto = _mapper.Map<List<ReadBidDto>>(myBids);
+            return Ok(myBidsDto); // Returns 200 OK with the user's bids.
         }
     }
 }

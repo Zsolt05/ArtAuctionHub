@@ -49,7 +49,7 @@ namespace ArtAuctionHub.Infrastructure.Services
         /// <param name="userId">The user's identifier.</param>
         /// <returns>A list of bid DTOs for the user.</returns>
         /// <exception cref="ArgumentException">Thrown when the user does not exist.</exception>
-        public async Task<List<BidDto>> GetBidsForUserAsync(int userId)
+        public async Task<List<Bid>> GetBidsForUserAsync(int userId)
         {
             _logger.LogInformation("Retrieving bids for user {UserId}", userId);
             if (!await _users.AnyAsync(u => u.Id == userId))
@@ -61,11 +61,17 @@ namespace ArtAuctionHub.Infrastructure.Services
             var bids = await _bids.ListByUserAsync(userId);
             _logger.LogInformation("Returned {Count} bids for user {UserId}", bids.Count, userId);
 
-            return bids.Select(b => new BidDto
+            return [.. bids.Select(b => new Bid
             {
                 Amount = b.Amount,
-                AuctionId = b.AuctionId
-            }).ToList();
+                AuctionId = b.AuctionId,
+                BidDate = b.BidDate,
+                User = new User
+                {
+                    Id = b.User.Id,
+                    UserName = b.User.UserName
+                }
+            })];
         }
 
         /// <inheritdoc/>
@@ -91,43 +97,36 @@ namespace ArtAuctionHub.Infrastructure.Services
         /// Places a bid for a given auction on behalf of the specified user.
         /// Performs validation against auction existence, end date and current max bid.
         /// </summary>
-        /// <param name="dto">The bid data transfer object (amount and auction id).</param>
+        /// <param name="placeBid">The bid details including auction ID and bid amount.</param>
         /// <param name="userId">The user's identifier.</param>
         /// <exception cref="ArgumentException">Thrown when the user or auction does not exist, 
         /// when the auction already ended, or when the bid amount is not high enough.</exception>
-        public async Task PlaceBidAsync(BidDto dto, int userId)
+        public async Task PlaceBidAsync(Bid placeBid, int userId)
         {
-            _logger.LogInformation("User {UserId} is placing a bid of {Amount} on auction {AuctionId}", userId, dto.Amount, dto.AuctionId);
+            _logger.LogInformation("User {UserId} is placing a bid of {Amount} on auction {AuctionId}", userId, placeBid.Amount, placeBid.AuctionId);
             if (!await _users.AnyAsync(u => u.Id == userId))
             {
                 _logger.LogWarning("User with ID {UserId} does not exist.", userId);
                 throw new ArgumentException($"User with ID {userId} does not exist.");
             }
 
-            if (!await _auctions.IsActiveAsync(dto.AuctionId, DateTime.UtcNow))
+            if (!await _auctions.IsActiveAsync(placeBid.AuctionId, DateTime.UtcNow))
             {
-                _logger.LogWarning("Auction with ID {AuctionId} is not active.", dto.AuctionId);
-                throw new ArgumentException($"Auction with ID {dto.AuctionId} is not active or does not exist.");
+                _logger.LogWarning("Auction with ID {AuctionId} is not active.", placeBid.AuctionId);
+                throw new ArgumentException($"Auction with ID {placeBid.AuctionId} is not active or does not exist.");
             }
 
-            var maxBid = await _bids.GetMaxAmountForAuctionAsync(dto.AuctionId);
-            if (dto.Amount <= maxBid)
+            var maxBid = await _bids.GetMaxAmountForAuctionAsync(placeBid.AuctionId);
+            if (placeBid.Amount <= maxBid)
             {
-                _logger.LogWarning("Bid amount {Amount} is not greater than current max bid {MaxBid} for auction {AuctionId}", dto.Amount, maxBid, dto.AuctionId);
+                _logger.LogWarning("Bid amount {Amount} is not greater than current max bid {MaxBid} for auction {AuctionId}", placeBid.Amount, maxBid, placeBid.AuctionId);
                 throw new ArgumentException($"Bid amount must be greater than the current maximum bid of {maxBid}.");
             }
 
-            var bid = new Bid
-            {
-                Amount = dto.Amount,
-                AuctionId = dto.AuctionId,
-                UserId = userId,
-                BidDate = DateTime.UtcNow
-            };
-
-            await _bids.AddAsync(bid);
+            placeBid.UserId = userId;
+            await _bids.AddAsync(placeBid);
             await _uow.SaveChangesAsync();
-            _logger.LogInformation("Bid of {Amount} placed successfully by user {UserId} on auction {AuctionId}", dto.Amount, userId, dto.AuctionId);
+            _logger.LogInformation("Bid of {Amount} placed successfully by user {UserId} on auction {AuctionId}", placeBid.Amount, userId, placeBid.AuctionId);
         }
     }
 }

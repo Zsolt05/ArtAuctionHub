@@ -1,5 +1,4 @@
-﻿using ArtAuctionHub.Application.DTOs.Bid;
-using ArtAuctionHub.Domain.Entities;
+﻿using ArtAuctionHub.Domain.Entities;
 using ArtAuctionHub.Shared.Exceptions;
 
 namespace ArtAuctionHub.Application.Interfaces
@@ -13,15 +12,15 @@ namespace ArtAuctionHub.Application.Interfaces
         /// <summary>
         /// Places a bid on an auction item.
         /// </summary>
-        /// <param name="dto">Bid data transfer object containing the bid details.</param>
+        /// <param name="placeBid">The bid details including auction ID and bid amount.</param>
         /// <param name="userId">The ID of the user placing the bid.</param>
-        Task PlaceBidAsync(BidDto dto, int userId);
+        Task PlaceBidAsync(Bid placeBid, int userId);
 
         /// <summary>
         /// Retrieves a list of all bids placed by a specific user.
         /// </summary>
-        /// <returns>A collection of BidDto representing the user's bids.</returns>
-        Task<List<BidDto>> GetBidsForUserAsync(int userId);
+        /// <returns>A collection of Bid entities.</returns>
+        Task<List<Bid>> GetBidsForUserAsync(int userId);
 
         /// <summary>
         /// Retrieves the highest bid for a specific auction.

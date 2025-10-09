@@ -1,4 +1,3 @@
-using ArtAuctionHub.Application.DTOs.Bid;
 using ArtAuctionHub.Application.Interfaces;
 using ArtAuctionHub.Domain.Entities;
 using ArtAuctionHub.Shared.Exceptions;
@@ -187,7 +186,7 @@ namespace ArtAuctionHub.API.Middlewares
                             }
 
                             // Create and place the new bid
-                            var newBid = new BidDto
+                            var newBid = new Bid
                             {
                                 AuctionId = auctionId,
                                 Amount = message.Amount

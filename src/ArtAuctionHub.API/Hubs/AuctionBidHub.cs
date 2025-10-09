@@ -1,5 +1,5 @@
-using ArtAuctionHub.Application.DTOs.Bid;
 using ArtAuctionHub.Application.Interfaces;
+using ArtAuctionHub.Domain.Entities;
 using ArtAuctionHub.Shared.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
@@ -66,7 +66,7 @@ namespace ArtAuctionHub.API.Hubs
                 return;
             }
 
-            var newBid = new BidDto
+            var newBid = new Bid
             {
                 AuctionId = auctionId,
                 Amount = amount

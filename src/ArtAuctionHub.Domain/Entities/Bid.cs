@@ -16,7 +16,7 @@
         /// <summary>
         /// The date and time when the bid was placed.
         /// </summary>
-        public DateTime BidDate { get; set; }
+        public DateTime BidDate { get; set; } = DateTime.UtcNow;
         /// <summary>
         /// The ID of the user who placed the bid.
         /// </summary>
