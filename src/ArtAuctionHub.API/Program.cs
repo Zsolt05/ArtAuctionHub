@@ -1,10 +1,12 @@
 ﻿using ArtAuctionHub.API.Extensions;
 using ArtAuctionHub.API.Filters;
 using ArtAuctionHub.API.Hubs;
+using ArtAuctionHub.API.Services;
 using ArtAuctionHub.Application.Extensions;
 using ArtAuctionHub.Application.Interfaces;
 using ArtAuctionHub.Application.Services;
 using ArtAuctionHub.Domain.Entities;
+using ArtAuctionHub.Domain.Options;
 using ArtAuctionHub.Infrastructure.Extensions;
 using ArtAuctionHub.Infrastructure.Persistence;
 using ArtAuctionHub.Infrastructure.Services;
@@ -69,6 +71,36 @@ builder.Services.AddResponseCaching();
 
 // Adds in-memory caching services to the application.
 builder.Services.AddMemoryCache();
+
+// Configures options for handling adult content.
+builder.Services.Configure<AdultContentOptions>(
+    builder.Configuration.GetSection("AdultContent"));
+
+// --- Options pattern usage explanation ---
+// There are three main options interfaces in ASP.NET Core for accessing configuration:
+//
+// 1. IOptions<T>:
+//    - Singleton lifetime.
+//    - Reads configuration once at application startup.
+//    - Use when you want static, never-changing configuration values.
+//    - Example: Used in AdultContentStartupLogger.
+//
+// 2. IOptionsSnapshot<T>:
+//    - Scoped lifetime (per-request).
+//    - Reads configuration on every HTTP request (if the config provider supports reload).
+//    - Use in controllers/services that need up-to-date config for each request.
+//    - Example: Used in AdultContentConfigController.
+//
+// 3. IOptionsMonitor<T>:
+//    - Singleton lifetime.
+//    - Supports change notifications and always provides the latest config values.
+//    - Use in background services, caches, or anywhere you want to react to config changes at runtime.
+//    - Example: Used in AdultContentChangeWatcher.
+//
+// See the related services and controller for practical usage examples:
+builder.Services.AddSingleton<AdultContentStartupLogger>();   // Uses IOptions<T>
+builder.Services.AddSingleton<AdultContentChangeWatcher>();   // Uses IOptionsMonitor<T>
+// AdultContentConfigController uses IOptionsSnapshot<T> (registered automatically as a controller)
 
 // Registers application services in the dependency injection container.
 // These services can be injected into controllers or other services.
