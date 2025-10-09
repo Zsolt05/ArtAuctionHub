@@ -290,3 +290,6 @@ dotnet ef migrations add <MigrationName> --project ArtAuctionHub.Infrastructure 
 ```powershell
 Add-Migration <MigrationName> -Project ArtAuctionHub.Infrastructure -StartupProject ArtAuctionHub.API
 ```
+
+---
+For a detailed architectural breakdown, see the [PROJECT_OVERVIEW.md](./PROJECT_OVERVIEW.md) file.
