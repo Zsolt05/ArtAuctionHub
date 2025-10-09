@@ -12,8 +12,6 @@
 
 ## Table of Contents
 
-## Table of Contents
-
 - [Overview](#overview)
   - [What You Can Learn from ArtAuctionHub](#what-you-can-learn-from-artauctionhub)
   - [Introduction to ASP.NET Core and Web Hosting](#introduction-to-aspnet-core-and-web-hosting)
